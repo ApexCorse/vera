@@ -1,5 +1,9 @@
 package parser
 
+type Config struct {
+	Messages []Message
+}
+
 type Message struct {
 	Name        string
 	ID          uint32
@@ -9,9 +13,9 @@ type Message struct {
 }
 
 type Signal struct {
-	Name     string
-	StartBit uint8
-	Length   uint8
+	Name      string
+	StartByte uint8
+	Length    uint8
 	Endianness
 	Signed    bool
 	Factor    float32
