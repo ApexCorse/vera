@@ -23,7 +23,7 @@ func parseMessageInstruction(messageInstruction string) (*Message, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if len(messageLines) == 1 {
 		return message, nil
 	}
@@ -109,11 +109,11 @@ func parseMessageSignals(messageSignals string) ([]Signal, error) {
 		lineParts := strings.Fields(line)
 		if len(lineParts) < 7 {
 			return nil, fmt.Errorf(`signal line %d is not well structured, must adhere to:
-SG_ <SignalName> : <StartBit>|<Length>@<ByteOrder><Signed> (<Factor>,<Offset>) [<Min>,<Max>] "<Unit>" <...Receivers>`, i)
+SG_ <SignalName> : <StartByte>|<Length>@<ByteOrder><Signed> (<Factor>,<Offset>) [<Min>,<Max>] "<Unit>" <...Receivers>`, i)
 		}
 
 		if lineParts[2] != ":" {
-			return nil, fmt.Errorf("signal line %d has not a ':' between <SignalName> and <StartBit>", i)
+			return nil, fmt.Errorf("signal line %d has not a ':' between <SignalName> and <StartByte>", i)
 		}
 
 		signal := Signal{
@@ -154,17 +154,17 @@ func parseMessageBytesInfo(signal *Signal, i int, signalBytesInfo string) error 
 		return fmt.Errorf("signal line %d has invalid bytes info: %s", i, signalBytesInfo)
 	}
 
-	signalStartBitAndLength := strings.Split(signalBytesFirstSplit[0], "|")
-	if len(signalStartBitAndLength) != 2 {
-		return fmt.Errorf("signal line %d has invalid start bit and length: %s", i, signalBytesFirstSplit[0])
+	signalStartByteAndLength := strings.Split(signalBytesFirstSplit[0], "|")
+	if len(signalStartByteAndLength) != 2 {
+		return fmt.Errorf("signal line %d has invalid start byte and length: %s", i, signalBytesFirstSplit[0])
 	}
-	signalStartBit, err := strconv.Atoi(signalStartBitAndLength[0])
+	signalStartByte, err := strconv.Atoi(signalStartByteAndLength[0])
 	if err != nil {
-		return fmt.Errorf("signal line %d has invalid start bit: %s", i, signalStartBitAndLength[0])
+		return fmt.Errorf("signal line %d has invalid start byte: %s", i, signalStartByteAndLength[0])
 	}
-	signalLength, err := strconv.Atoi(signalStartBitAndLength[1])
+	signalLength, err := strconv.Atoi(signalStartByteAndLength[1])
 	if err != nil {
-		return fmt.Errorf("signal line %d has invalid length: %s", i, signalStartBitAndLength[1])
+		return fmt.Errorf("signal line %d has invalid length: %s", i, signalStartByteAndLength[1])
 	}
 
 	signalEndiannessAndSigned := signalBytesFirstSplit[1]
@@ -189,7 +189,7 @@ func parseMessageBytesInfo(signal *Signal, i int, signalBytesInfo string) error 
 	signal.Endianness = Endianness(signalEndianness)
 	signal.Length = uint8(signalLength)
 	signal.Signed = signalSigned
-	signal.StartBit = uint8(signalStartBit)
+	signal.StartByte = uint8(signalStartByte)
 
 	return nil
 }
