@@ -1,10 +1,30 @@
 package parser
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestParse(t *testing.T) {
+	t.Run("should return config struct with 2 messages", func(t *testing.T) {
+		a := assert.New(t)
+
+		configStr := `BO_ 123 EngineSpeed: 24 Engine
+	SG_ EngineSpeed : 0|16@1+ (0.1,0) [0|8000] "RPM" DriverGateway
+	SG_ OilTemperature : 16|8@1- (1,-40) [-40|150] "ºC" DriverGateway,EngineGateway
+BO_ 123 EngineSpeed: 24 Engine
+	SG_ EngineSpeed : 0|16@1+ (0.1,0) [0|8000] "RPM" DriverGateway
+	SG_ OilTemperature : 16|8@1- (1,-40) [-40|150] "ºC" DriverGateway,EngineGateway`
+		reader := strings.NewReader(configStr)
+
+		config, err := Parse(reader)
+		a.Nil(err)
+		a.NotNil(config)
+		a.Len(config.Messages, 2)
+	})
+}
 
 func TestParseMessageInstruction(t *testing.T) {
 	t.Run("should return message struct on correct definition", func(t *testing.T) {
