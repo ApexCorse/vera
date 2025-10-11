@@ -2,9 +2,51 @@ package parser
 
 import (
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 )
+
+func Parse(r io.Reader) (*Config, error) {
+	bytes, err := io.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+	config := &Config{}
+
+	content := string(bytes)
+	content = replaceNewLineCharacters(content)
+
+	lines := strings.Split(content, "\n")
+	if len(lines) == 0 {
+		return config, nil
+	}
+
+	for i := 0; i < len(lines); i++ {
+		if !strings.HasPrefix(lines[i], "BO_") {
+			continue
+		}
+		messageInstruction := lines[i]
+
+		for j := i + 1; j < len(lines); j++ {
+			if !strings.HasPrefix(lines[j], "\tSG_") {
+				i = j + 1
+				break
+			}
+
+			messageInstruction += "\n" + lines[j]
+		}
+
+		messageConfig, err := parseMessageInstruction(messageInstruction)
+		if err != nil {
+			return nil, err
+		}
+
+		config.Messages = append(config.Messages, *messageConfig)
+	}
+
+	return config, nil
+}
 
 func parseMessageInstruction(messageInstruction string) (*Message, error) {
 	messageInstruction = replaceNewLineCharacters(messageInstruction)
