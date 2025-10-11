@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/ApexCorse/vera/internal/codegen"
 	"github.com/ApexCorse/vera/internal/parser"
 )
 
@@ -18,6 +19,9 @@ func main() {
 		fmt.Println("fatal: need build path")
 		os.Exit(1)
 	}
+	buildPath := args[0]
+	sourceFilePath := buildPath + "/vera.c"
+	headerFilePath := buildPath + "/vera.h"
 
 	dbcFile, err := os.Open(*dbcFilePath)
 	if err != nil {
@@ -31,5 +35,23 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println(config)
+	sourceFile, err := os.Create(sourceFilePath)
+	if err != nil {
+		fmt.Println("fatal: error in creating source file: ", err.Error())
+		os.Exit(1)
+	}
+	headerFile, err := os.Create(headerFilePath)
+	if err != nil {
+		fmt.Println("fatal: error in creating header file: ", err.Error())
+		os.Exit(1)
+	}
+
+	if err = codegen.GenerateHeader(headerFile, config); err != nil {
+		fmt.Println("fatal: error in writing header file: ", err.Error())
+		os.Exit(1)
+	}
+	if err = codegen.GenerateSource(sourceFile, config, "vera.h"); err != nil {
+		fmt.Println("fatal: error in writing source file: ", err.Error())
+		os.Exit(1)
+	}
 }

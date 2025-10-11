@@ -30,7 +30,7 @@ func Parse(r io.Reader) (*Config, error) {
 
 		for j := i + 1; j < len(lines); j++ {
 			if !strings.HasPrefix(lines[j], "\tSG_") {
-				i = j + 1
+				i = j - 1
 				break
 			}
 
@@ -49,8 +49,6 @@ func Parse(r io.Reader) (*Config, error) {
 }
 
 func parseMessageInstruction(messageInstruction string) (*Message, error) {
-	messageInstruction = replaceNewLineCharacters(messageInstruction)
-
 	if !strings.HasPrefix(messageInstruction, "BO_") {
 		return nil, ErrorMessageWrongPrefix
 	}
