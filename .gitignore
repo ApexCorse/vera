@@ -1,3 +1,6 @@
 .DS_Store
+
 *.dbc
+!config-test.dbc
+
 build
