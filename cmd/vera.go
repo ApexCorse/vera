@@ -35,6 +35,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err := config.Validate(); err != nil {
+		fmt.Println("fatal: error in validating dbc file: ", err.Error())
+		os.Exit(1)
+	}
+
 	sourceFile, err := os.Create(sourceFilePath)
 	if err != nil {
 		fmt.Println("fatal: error in creating source file: ", err.Error())

@@ -1,0 +1,45 @@
+package parser
+
+import "fmt"
+
+func (c *Config) Validate() error {
+	for i, m := range c.Messages {
+		if err := m.Validate(); err != nil {
+			return fmt.Errorf("message Nº%d: %s", i, err.Error())
+		}
+	}
+
+	return nil
+}
+
+func (m *Message) Validate() error {
+	if m.Length > 8 {
+		return ErrorMessageLengthOutOfBounds
+	}
+
+	//TODO(lentscode): check for start bytes out of bounds
+	totalLengths := uint8(0)
+
+	for i, s := range m.Signals {
+		if err := s.Validate(); err != nil {
+			return fmt.Errorf("signal Nº%d: %s", i, err.Error())
+		}
+
+		totalLengths += s.Length
+	}
+	if totalLengths > m.Length {
+		return ErrorSignalLengthsGreaterThanMessageLegnth
+	}
+
+	return nil
+}
+
+func (s *Signal) Validate() error {
+	if s.StartByte > 8 {
+		return ErrorSignalStartByteOutOfBounds
+	}
+	if s.Length > 8 {
+		return ErrorSignalLengthOutOfBounds
+	}
+	return nil
+}
