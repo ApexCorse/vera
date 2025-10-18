@@ -41,5 +41,8 @@ func (s *Signal) Validate() error {
 	if s.Length > 8 {
 		return ErrorSignalLengthOutOfBounds
 	}
+	if s.Factor == 0 {
+		return ErrorSignalFactorIsZero
+	}
 	return nil
 }

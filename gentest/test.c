@@ -18,7 +18,7 @@ void test_successful_decoding(void) {
 
 	TEST_ASSERT_EQUAL_STRING("RPM", decoded_signals[0].unit);
 	TEST_ASSERT_EQUAL_STRING("EngineSpeed", decoded_signals[0].name); 
-	TEST_ASSERT_FLOAT_WITHIN(0.01, 54.12, decoded_signals[0].value);
+	TEST_ASSERT_FLOAT_WITHIN(0.01, 5.412, decoded_signals[0].value);
 }
 
 int main(void) {

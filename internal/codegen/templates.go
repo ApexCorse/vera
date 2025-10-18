@@ -124,6 +124,13 @@ vera_err_t vera_decode_can_frame(
 	cu.u = data;
 	res->value = cu.f;
 
+	res->value *= signal->factor;
+	res->value += signal->offset;
+	if (res->value < signal->min)
+		res->value = signal->min;
+	if (res->value > signal->max)
+		res->value = signal->max;
+
 	return vera_err_ok;
 }`
 )
