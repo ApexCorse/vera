@@ -27,8 +27,8 @@ func GenerateSource(w io.Writer, config *parser.Config, headerFile string) error
 	sb.WriteString(decodeMessageFunc + "\n\n")
 
 	sb.WriteString(`vera_err_t vera_decode_can_frame(
-	vera_can_rx_frame_t* 		frame,
-	vera_decoded_signal_t**	decoded_signals
+	vera_can_rx_frame_t*    frame,
+	vera_decoded_signal_t** decoded_signals
 ) {
 	switch (frame->id) {`)
 

@@ -7,47 +7,47 @@ const (
 #define CAN_FD_MAX_DATA_LEN 64
 
 typedef struct {
-	uint32_t 	id;
-	uint8_t 	dlc;
-	uint8_t		data[CAN_FD_MAX_DATA_LEN];
+	uint32_t id;
+	uint8_t  dlc;
+	uint8_t  data[CAN_FD_MAX_DATA_LEN];
 
-	bool	is_extended_id;
-	bool	is_rtr;
-	bool	is_fd;
-	bool	bit_rate_switch;
-	bool	error_state_indicator;
+	bool is_extended_id;
+	bool is_rtr;
+	bool is_fd;
+	bool bit_rate_switch;
+	bool error_state_indicator;
 
-	uint64_t	timestamp;
+	uint64_t timestamp;
 } vera_can_rx_frame_t;
 
 typedef struct {
-	char*			name;
-	uint8_t		start_byte;
-	uint8_t		dlc;
-	uint8_t		endianness;
-	bool			sign;
-	float			factor;
-	float			offset;
-	float			min;
-	float			max;
-	char*			unit;
-	char**		receivers;
+	char*   name;
+	uint8_t start_byte;
+	uint8_t dlc;
+	uint8_t endianness;
+	bool    sign;
+	float   factor;
+	float   offset;
+	float   min;
+	float   max;
+	char*   unit;
+	char**  receivers;
 } vera_signal_t;
 
 typedef struct {
-	uint32_t				id;
-	char*						name;
-	uint8_t					dlc;
-	char*						transmitter;
-	vera_signal_t* 	signals;
-	uint8_t					n_signals;
+	uint32_t       id;
+	char*          name;
+	uint8_t        dlc;
+	char*          transmitter;
+	vera_signal_t* signals;
+	uint8_t        n_signals;
 } vera_message_t;
 
 typedef struct {
-	char*			name;
-	char*			unit;
-	float			value;
-	uint64_t 	timestamp;
+	char*    name;
+	char*    unit;
+	float    value;
+	uint64_t timestamp;
 } vera_decoded_signal_t;
 
 typedef enum {
@@ -57,15 +57,15 @@ typedef enum {
 } vera_err_t;
 
 vera_err_t vera_decode_can_frame(
-	vera_can_rx_frame_t* 			frame,
-	vera_decoded_signal_t** 	decoded_signals
+	vera_can_rx_frame_t*    frame,
+	vera_decoded_signal_t** decoded_signals
 );`
 	sourceFileIncludes = `#include <strings.h>
 #include <stdio.h>`
 	decodeMessageFunc = `vera_err_t _decode_message(
-	vera_can_rx_frame_t* 			frame,
-	vera_message_t* 					message,
-	vera_decoded_signal_t** 	decoded_signals
+	vera_can_rx_frame_t*    frame,
+	vera_message_t*         message,
+	vera_decoded_signal_t** decoded_signals
 ) {
 	*decoded_signals = (vera_decoded_signal_t*)malloc(sizeof(vera_decoded_signal_t)*message->n_signals);
 	if (!*decoded_signals) return vera_err_allocation;
@@ -85,9 +85,9 @@ vera_err_t vera_decode_can_frame(
 	return vera_err_ok;
 }`
 	decodeSignalFunc = `vera_err_t _decode_signal(
-	vera_can_rx_frame_t* 		frame,
-	vera_signal_t*					signal,
-	vera_decoded_signal_t* 	res
+	vera_can_rx_frame_t*   frame,
+	vera_signal_t*         signal,
+	vera_decoded_signal_t* res
 ) {
 	res->name = strdup(signal->name);
 	if (!res->name) return vera_err_allocation;
