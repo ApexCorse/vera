@@ -11,3 +11,10 @@ BO_ <MessageID> <MessageName>: <DLC> <TransmitterNode>`)
 	ErrorMessageNameEndsNotWithColon = errors.New("message name must end with a ':'")
 	ErrorMessageDLCNotInteger        = errors.New("message DLC must be a base 10 integer")
 )
+
+var (
+	ErrorMessageLengthOutOfBounds              = errors.New("message DLC must be a number from 1 to 8")
+	ErrorSignalLengthOutOfBounds               = errors.New("signal start byte must be a number from 1 to 8")
+	ErrorSignalStartByteOutOfBounds            = errors.New("signal DLC must be a number from 1 to 8")
+	ErrorSignalLengthsGreaterThanMessageLegnth = errors.New("sum of signal lengths is greater than message length")
+)
