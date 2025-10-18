@@ -22,7 +22,7 @@ typedef struct {
 
 typedef struct {
 	char*			name;
-	uint8_t	start_byte;
+	uint8_t		start_byte;
 	uint8_t		dlc;
 	uint8_t		endianness;
 	bool			sign;
@@ -45,8 +45,8 @@ typedef struct {
 
 typedef struct {
 	char*			name;
-	float			value;
 	char*			unit;
+	float			value;
 	uint64_t 	timestamp;
 } vera_decoded_signal_t;
 
@@ -57,23 +57,24 @@ typedef enum {
 } vera_err_t;
 
 vera_err_t vera_decode_can_frame(
-	vera_can_rx_frame_t* 		frame,
-	vera_decoded_signal_t* 	decoded_signals
+	vera_can_rx_frame_t* 			frame,
+	vera_decoded_signal_t** 	decoded_signals
 );`
-	sourceFileIncludes = `#include <strings.h>`
-	decodeMessageFunc  = `vera_err_t _decode_message(
-	vera_can_rx_frame_t* 		frame,
-	vera_message_t* 				message,
-	vera_decoded_signal_t* 	decoded_signals
+	sourceFileIncludes = `#include <strings.h>
+#include <stdio.h>`
+	decodeMessageFunc = `vera_err_t _decode_message(
+	vera_can_rx_frame_t* 			frame,
+	vera_message_t* 					message,
+	vera_decoded_signal_t** 	decoded_signals
 ) {
-	decoded_signals = (vera_decoded_signal_t*)malloc(sizeof(vera_decoded_signal_t)*message->n_signals);
-	if (!decoded_signals) return vera_err_allocation;
-	
+	*decoded_signals = (vera_decoded_signal_t*)malloc(sizeof(vera_decoded_signal_t)*message->n_signals);
+	if (!*decoded_signals) return vera_err_allocation;
+
 	for (uint8_t i = 0; i < message->n_signals; i++) {
 		vera_err_t err = _decode_signal(
 			frame,
 			&(message->signals[i]),
-			&(decoded_signals[i])
+			(decoded_signals[i])
 		);
 		if (err != vera_err_ok) {
 			free(decoded_signals);
@@ -97,7 +98,7 @@ vera_err_t vera_decode_can_frame(
 		return vera_err_allocation;
 	}
 	
-	if (signal->start_byte > frame->dlc || signal->start_byte + signal->dlc > frame->dlc) {
+	if (signal->start_byte >= frame->dlc || signal->start_byte + signal->dlc > frame->dlc) {
 		free(res->name);
 		free(res->unit);
 		return vera_err_out_of_bounds;		
@@ -106,16 +107,23 @@ vera_err_t vera_decode_can_frame(
 	uint8_t payload[signal->dlc];
 	memcpy(payload, frame->data + signal->start_byte, signal->dlc);
 
-	uint64_t data = 0;
+	uint32_t data = 0;
 	for (uint8_t i = 0; i < signal->dlc; i++) {
 		if (signal->endianness == 0) {
-			data |= ((uint64_t)payload[i] << i * 8);
+			data |= ((uint32_t)payload[i] << i * 8);
 		} else {
-			data |= ((uint64_t)payload[i] << (signal->dlc-1-i) * 8);
+			data |= ((uint32_t)payload[i] << (signal->dlc-1-i) * 8);
 		}
 	}
 
-	memcpy(&res->value, &data, sizeof(res->value));
+	typedef union {
+		uint32_t u;
+		float f;
+	} convert_union;
+	convert_union cu;
+	cu.u = data;
+	res->value = cu.f;
+
 	return vera_err_ok;
 }`
 )

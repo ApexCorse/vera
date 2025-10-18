@@ -7,13 +7,18 @@ void tearDown(void) {}
 void test_successful_decoding(void) {
 	vera_can_rx_frame_t frame = {
 		.id = 0x7b,
-		.dlc = 2,
-		.data = {0x45, 0xaa},
+		.dlc = 4,
+		.data = {0x42, 0x58, 0x7d, 0xf4},
 	};
 	vera_decoded_signal_t* decoded_signals = NULL;
 
-	vera_err_t err = vera_decode_can_frame(&frame, decoded_signals);
+	vera_err_t err = vera_decode_can_frame(&frame, &decoded_signals);
 	TEST_ASSERT_EQUAL(vera_err_ok, err);
+	TEST_ASSERT_NOT_NULL(decoded_signals);
+
+	TEST_ASSERT_EQUAL_STRING("RPM", decoded_signals[0].unit);
+	TEST_ASSERT_EQUAL_STRING("EngineSpeed", decoded_signals[0].name); 
+	TEST_ASSERT_FLOAT_WITHIN(0.01, 54.12, decoded_signals[0].value);
 }
 
 int main(void) {
