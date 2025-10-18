@@ -27,14 +27,68 @@ func GenerateSource(w io.Writer, config *parser.Config, headerFile string) error
 	sb.WriteString(decodeMessageFunc + "\n\n")
 
 	sb.WriteString(`vera_err_t vera_decode_can_frame(
-	vera_can_rx_frame_t* frame,
-	vera_decoded_signal_t* decoded_signals
+	vera_can_rx_frame_t* 		frame,
+	vera_decoded_signal_t**	decoded_signals
 ) {
 	switch (frame->id) {`)
 
 	for _, m := range config.Messages {
-		sb.WriteString(fmt.Sprintf("\n\t\tcase %#x:", m.ID))
-		sb.WriteString("\n\t\t\tbreak;")
+		sb.WriteString(fmt.Sprintf("\n\t\tcase %#x: {", m.ID))
+		sb.WriteString(fmt.Sprintf(`
+			vera_message_t message = {
+				.id = %#x,
+				.name = "%s",
+				.dlc = %d,
+				.n_signals = %d
+			};`,
+			m.ID,
+			m.Name,
+			m.Length,
+			len(m.Signals),
+		))
+
+		sb.WriteString(fmt.Sprintf(`
+			message.signals = (vera_signal_t*)malloc(sizeof(vera_signal_t)*%d);`, len(m.Signals)))
+		for i, s := range m.Signals {
+			sb.WriteString(fmt.Sprintf(`
+			message.signals[%d] = (vera_signal_t){
+				.name = "%s",
+				.unit = "%s",
+				.start_byte = %d,
+				.dlc = %d,
+				.endianness = %d,
+				.sign = %t,
+				.factor = %.4f,
+				.offset = %.4f,
+				.min = %.4f,
+				.max = %.4f,
+			};`,
+				i,
+				s.Name,
+				s.Unit,
+				s.StartByte,
+				s.Length,
+				s.Endianness,
+				s.Signed,
+				s.Factor,
+				s.Offset,
+				s.Min,
+				s.Max,
+			))
+		}
+
+		sb.WriteString(`
+			vera_err_t err = _decode_message(
+				frame,
+				&message,
+				decoded_signals
+			);
+			if (err != vera_err_ok) {
+				free(message.signals);
+				return err;
+			}
+			break;
+		}`)
 	}
 	sb.WriteString("\n\t}")
 	sb.WriteString("\n\treturn vera_err_ok;")
