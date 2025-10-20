@@ -18,4 +18,5 @@ var (
 	ErrorSignalStartByteOutOfBounds            = errors.New("signal DLC must be a number from 1 to 8")
 	ErrorSignalLengthsGreaterThanMessageLegnth = errors.New("sum of signal lengths is greater than message length")
 	ErrorSignalFactorIsZero                    = errors.New("signal factor cannot be zero")
+	ErrorSignalFigures                         = errors.New("sum of integer and decimal figures must be equal to Length * 8")
 )

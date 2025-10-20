@@ -23,6 +23,7 @@ func GenerateSource(w io.Writer, config *parser.Config, headerFile string) error
 	}
 
 	sb.WriteString(sourceFileIncludes + "\n\n")
+	sb.WriteString(valueParsingFunctions + "\n\n")
 	sb.WriteString(decodeSignalFunc + "\n\n")
 	sb.WriteString(decodeMessageFunc + "\n\n")
 
@@ -58,6 +59,8 @@ func GenerateSource(w io.Writer, config *parser.Config, headerFile string) error
 				.dlc = %d,
 				.endianness = %d,
 				.sign = %t,
+				.integer_figures = %d,
+				.decimal_figures = %d,
 				.factor = %.4f,
 				.offset = %.4f,
 				.min = %.4f,
@@ -70,6 +73,8 @@ func GenerateSource(w io.Writer, config *parser.Config, headerFile string) error
 				s.Length,
 				s.Endianness,
 				s.Signed,
+				s.IntegerFigures,
+				s.DecimalFigures,
 				s.Factor,
 				s.Offset,
 				s.Min,

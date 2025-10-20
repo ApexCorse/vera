@@ -161,11 +161,50 @@ func TestParseMessageSignals(t *testing.T) {
 		a.Equal([]Node{"DriverGateway", "EngineGateway"}, signals[1].Receivers)
 	})
 
+	t.Run("should return signal struct array on correct input (including integer and decimal part)", func(t *testing.T) {
+		a := assert.New(t)
+
+		signalsStr := `	SG_ EngineSpeed : 0|16@1+(4,4) (0.1,0) [0|8000] "RPM" DriverGateway`
+		signals, err := parseMessageSignals(signalsStr)
+
+		a.Nil(err)
+		a.NotNil(signals)
+		a.Len(signals, 1)
+
+		a.Equal("EngineSpeed", signals[0].Name)
+		a.Equal(uint8(0), signals[0].StartByte)
+		a.Equal(uint8(16), signals[0].Length)
+		a.Equal(BigEndian, signals[0].Endianness)
+		a.False(signals[0].Signed)
+		a.Equal(float32(0.1), signals[0].Factor)
+		a.Equal(float32(0), signals[0].Offset)
+		a.Equal(float32(0), signals[0].Min)
+		a.Equal(float32(8000), signals[0].Max)
+		a.Equal("RPM", signals[0].Unit)
+		a.Len(signals[0].Receivers, 1)
+		a.Equal([]Node{"DriverGateway"}, signals[0].Receivers)
+
+		a.Equal(uint8(4), signals[0].IntegerFigures)
+		a.Equal(uint8(4), signals[0].DecimalFigures)
+	})
+
 	t.Run("fails because it lacks tabs", func(t *testing.T) {
 		a := assert.New(t)
 
 		// Missing tab
 		signalsStr := `SG_ EngineSpeed : 0|16@1+ (0.1,0) [0|8000] "RPM" DriverGateway
+	SG_ OilTemperature : 16|8@1- (1,-40) [-40|150] "ºC" DriverGateway,EngineGateway`
+		signals, err := parseMessageSignals(signalsStr)
+
+		a.Error(err)
+		a.Nil(signals)
+	})
+
+	t.Run("fails because decimal format is invalid", func(t *testing.T) {
+		a := assert.New(t)
+
+		// Wrong decimal format "("
+		signalsStr := `	SG_ EngineSpeed : 0|16@1+( (0.1,0) [0|8000] "RPM" DriverGateway
 	SG_ OilTemperature : 16|8@1- (1,-40) [-40|150] "ºC" DriverGateway,EngineGateway`
 		signals, err := parseMessageSignals(signalsStr)
 

@@ -26,6 +26,8 @@ typedef struct {
 	uint8_t dlc;
 	uint8_t endianness;
 	bool    sign;
+	uint8_t integer_figures;
+	uint8_t decimal_figures;
 	float   factor;
 	float   offset;
 	float   min;
@@ -61,7 +63,8 @@ vera_err_t vera_decode_can_frame(
 	vera_decoded_signal_t** decoded_signals
 );`
 	sourceFileIncludes = `#include <strings.h>
-#include <stdio.h>`
+#include <stdio.h>
+#include <math.h>`
 	decodeMessageFunc = `vera_err_t _decode_message(
 	vera_can_rx_frame_t*    frame,
 	vera_message_t*         message,
@@ -117,13 +120,14 @@ vera_err_t vera_decode_can_frame(
 		}
 	}
 
-	typedef union {
-		uint32_t u;
-		float f;
-	} convert_union;
-	convert_union cu;
-	cu.u = data;
-	res->value = cu.f;
+	if (signal->integer_figures || signal->decimal_figures)
+		res->value = _parse_fixed_point_float(
+			data,
+			signal->integer_figures,
+			signal->decimal_figures
+		);
+	else res->value = _parse_float_directly(data);
+
 
 	res->value *= signal->factor;
 	res->value += signal->offset;
@@ -134,4 +138,34 @@ vera_err_t vera_decode_can_frame(
 
 	return vera_err_ok;
 }`
+	valueParsingFunctions = `// Needs previous validation
+float _parse_fixed_point_float(
+	uint32_t value,
+	uint8_t  integer_figures,
+	uint8_t  decimal_figures
+) {
+	float parsed_value = 0.0;
+
+	for (int i = 0; i < decimal_figures; i++) {
+		parsed_value += ((value >> i) & 1) * pow(2, (float)(i - decimal_figures));
+	}
+
+	for (int i = 0; i < integer_figures; i++) {
+		parsed_value += ((value >> (decimal_figures + i)) & 1) * pow(2, (float)i);
+	}
+
+	return parsed_value;
+}
+
+float _parse_float_directly(uint32_t value) {
+	typedef union {
+		uint32_t u;
+		float f;
+	} convert_union;
+	convert_union cu;
+	cu.u = value;
+
+	return cu.f;
+}
+`
 )
