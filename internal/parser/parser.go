@@ -7,6 +7,15 @@ import (
 	"strings"
 )
 
+type intermediateSignalParsing struct {
+	name         string
+	byteInfo     string
+	factorOffset string
+	minMax       string
+	unit         string
+	receivers    string
+}
+
 func Parse(r io.Reader) (*Config, error) {
 	bytes, err := io.ReadAll(r)
 	if err != nil {
@@ -207,29 +216,59 @@ func parseMessageBytesInfo(signal *Signal, i int, signalBytesInfo string) error 
 		return fmt.Errorf("signal line %d has invalid length: %s", i, signalStartByteAndLength[1])
 	}
 
-	signalEndiannessAndSigned := signalBytesFirstSplit[1]
-	if len(signalEndiannessAndSigned) != 2 {
-		return fmt.Errorf("signal line %d has invalid byte order and signed: %s", i, signalEndiannessAndSigned)
+	signalOtherInfo := signalBytesFirstSplit[1]
+	if len(signalOtherInfo) < 2 {
+		return fmt.Errorf("signal line %d has invalid byte order and signed: %s", i, signalOtherInfo)
 	}
 
-	signalEndianness, err := strconv.ParseUint(string(signalEndiannessAndSigned[0]), 10, 1)
+	signalEndianness, err := strconv.ParseUint(string(signalOtherInfo[0]), 10, 1)
 	if err != nil {
-		return fmt.Errorf("signal line %d has invalid byte order: %s", i, string(signalEndiannessAndSigned[0]))
+		return fmt.Errorf("signal line %d has invalid byte order: %s", i, string(signalOtherInfo[0]))
 	}
 	var signalSigned bool
-	switch signalEndiannessAndSigned[1] {
+	switch signalOtherInfo[1] {
 	case '+':
 		signalSigned = false
 	case '-':
 		signalSigned = true
 	default:
-		return fmt.Errorf("signal line %d has invalid signed: %s", i, string(signalEndiannessAndSigned[1]))
+		return fmt.Errorf("signal line %d has invalid signed: %s", i, string(signalOtherInfo[1]))
 	}
 
 	signal.Endianness = Endianness(signalEndianness)
 	signal.Length = uint8(signalLength)
 	signal.Signed = signalSigned
 	signal.StartByte = uint8(signalStartByte)
+
+	if len(signalOtherInfo) == 2 {
+		return nil
+	}
+
+	signalDecimalFormat := signalOtherInfo[2:]
+	if signalDecimalFormat[0] != '(' || signalDecimalFormat[len(signalDecimalFormat)-1] != ')' {
+		return fmt.Errorf("signal line %d has invalid decimal format: %s", i, signalDecimalFormat)
+	}
+
+	signalDecimalFormat = strings.TrimPrefix(strings.TrimSuffix(signalDecimalFormat, ")"), "(")
+	signalDecimalFormatParts := strings.Split(signalDecimalFormat, ",")
+	if len(signalDecimalFormatParts) != 2 {
+		return fmt.Errorf("signal line %d has invalid decimal format: %s", i, signalDecimalFormat)
+	}
+
+	integerFiguresStr := signalDecimalFormatParts[0]
+	decimalFiguresStr := signalDecimalFormatParts[1]
+
+	integerFigures, err := strconv.Atoi(integerFiguresStr)
+	if err != nil {
+		return fmt.Errorf("signal line %d has invalid decimal format: %s", i, signalDecimalFormat)
+	}
+	decimalFigures, err := strconv.Atoi(decimalFiguresStr)
+	if err != nil {
+		return fmt.Errorf("signal line %d has invalid decimal format: %s", i, signalDecimalFormat)
+	}
+
+	signal.IntegerFigures = uint8(integerFigures)
+	signal.DecimalFigures = uint8(decimalFigures)
 
 	return nil
 }

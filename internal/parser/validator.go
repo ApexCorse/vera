@@ -44,5 +44,11 @@ func (s *Signal) Validate() error {
 	if s.Factor == 0 {
 		return ErrorSignalFactorIsZero
 	}
+
+	if (s.IntegerFigures > 0 || s.DecimalFigures > 0) &&
+		s.IntegerFigures+s.DecimalFigures != s.Length*8 {
+		return ErrorSignalFigures
+	}
+
 	return nil
 }
