@@ -4,12 +4,12 @@ const (
 	includeFile = `#include <stdbool.h>
 #include <stdlib.h>
 
-#define CAN_FD_MAX_DATA_LEN 64
+#define CAN_MAX_DATA_LEN 8
 
 typedef struct {
 	uint32_t id;
 	uint8_t  dlc;
-	uint8_t  data[CAN_FD_MAX_DATA_LEN];
+	uint8_t  data[CAN_MAX_DATA_LEN];
 
 	bool is_extended_id;
 	bool is_rtr;
