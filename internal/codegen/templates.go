@@ -73,11 +73,12 @@ vera_err_t vera_decode_can_frame(
 	for (uint8_t i = 0; i < message->n_signals; i++) {
 		vera_err_t err = _decode_signal(
 			frame,
-			&(message->signals[i]),
-			(decoded_signals[i])
+			message->signals + i,
+			(*decoded_signals) + i
 		);
 		if (err != vera_err_ok) {
-			free(decoded_signals);
+			free(*decoded_signals);
+			*decoded_signals = NULL;
 			return err;
 		}
 	}
