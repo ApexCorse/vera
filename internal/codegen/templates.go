@@ -52,6 +52,11 @@ typedef struct {
 	uint64_t timestamp;
 } vera_decoded_signal_t;
 
+typedef struct {
+	uint8_t n_signals;
+	vera_decoded_signal_t* decoded_signals;
+} vera_decoding_result_t;
+
 typedef enum {
 	vera_err_ok,
 	vera_err_allocation,
@@ -59,8 +64,8 @@ typedef enum {
 } vera_err_t;
 
 vera_err_t vera_decode_can_frame(
-	vera_can_rx_frame_t*    frame,
-	vera_decoded_signal_t** decoded_signals
+	vera_can_rx_frame_t*   frame,
+	vera_decoding_result_t* result
 );`
 	sourceFileIncludes = `#include <strings.h>
 #include <stdio.h>
@@ -68,22 +73,23 @@ vera_err_t vera_decode_can_frame(
 	decodeMessageFunc = `vera_err_t _decode_message(
 	vera_can_rx_frame_t*    frame,
 	vera_message_t*         message,
-	vera_decoded_signal_t** decoded_signals
+	vera_decoding_result_t* result
 ) {
-	*decoded_signals = (vera_decoded_signal_t*)malloc(sizeof(vera_decoded_signal_t)*message->n_signals);
-	if (!*decoded_signals) return vera_err_allocation;
+	result->decoded_signals = (vera_decoded_signal_t*)malloc(sizeof(vera_decoded_signal_t)*message->n_signals);
+	if (!result->decoded_signals) return vera_err_allocation;
 
 	for (uint8_t i = 0; i < message->n_signals; i++) {
 		vera_err_t err = _decode_signal(
 			frame,
 			message->signals + i,
-			(*decoded_signals) + i
+			result->decoded_signals + i
 		);
 		if (err != vera_err_ok) {
-			free(*decoded_signals);
-			*decoded_signals = NULL;
+			free(result->decoded_signals);
+			result->decoded_signals = NULL;
 			return err;
 		}
+		result->n_signals++;
 	}
 
 	return vera_err_ok;
