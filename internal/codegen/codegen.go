@@ -28,8 +28,8 @@ func GenerateSource(w io.Writer, config *parser.Config, headerFile string) error
 	sb.WriteString(decodeMessageFunc + "\n\n")
 
 	sb.WriteString(`vera_err_t vera_decode_can_frame(
-	vera_can_rx_frame_t*    frame,
-	vera_decoded_signal_t** decoded_signals
+	vera_can_rx_frame_t*  	frame,
+	vera_decoding_result_t* result
 ) {
 	switch (frame->id) {`)
 
@@ -86,7 +86,7 @@ func GenerateSource(w io.Writer, config *parser.Config, headerFile string) error
 			vera_err_t err = _decode_message(
 				frame,
 				&message,
-				decoded_signals
+				result
 			);
 			if (err != vera_err_ok) {
 				free(message.signals);

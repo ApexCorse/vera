@@ -10,12 +10,17 @@ void test_successful_decoding(void) {
 		.dlc = 6,
 		.data = {0x42, 0x58, 0x7d, 0xf4, 0x0c, 0xe5},
 	};
-	vera_decoded_signal_t* decoded_signals = NULL;
+	vera_decoding_result_t result = {
+		.n_signals = 0,
+		.decoded_signals = NULL
+	};
 
-	vera_err_t err = vera_decode_can_frame(&frame, &decoded_signals);
+	vera_err_t err = vera_decode_can_frame(&frame, &result);
 	TEST_ASSERT_EQUAL(vera_err_ok, err);
-	TEST_ASSERT_NOT_NULL(decoded_signals);
+	TEST_ASSERT_NOT_NULL(result.decoded_signals);
+	TEST_ASSERT_EQUAL(2, result.n_signals);
 
+	vera_decoded_signal_t* decoded_signals = result.decoded_signals;
 	TEST_ASSERT_EQUAL_STRING("RPM", decoded_signals[0].unit);
 	TEST_ASSERT_EQUAL_STRING("EngineSpeed", decoded_signals[0].name); 
 	TEST_ASSERT_FLOAT_WITHIN(0.01, 5.412, decoded_signals[0].value);
