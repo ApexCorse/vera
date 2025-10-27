@@ -25,12 +25,12 @@ Vera is a code generation tool that parses DBC (Database Container) files and ge
 
 - Go 1.25.1 or later
 
-### Build from Source
+### Install
 
 ```bash
 git clone https://github.com/ApexCorse/vera.git
 cd vera
-go build -o vera ./cmd
+go install github.com/ApexCorse/vera/cmd/vera
 ```
 
 ## Usage
