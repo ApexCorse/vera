@@ -11,6 +11,7 @@ Vera is a code generation tool that parses DBC (Database Container) files and ge
 - **DBC Parsing**: Reads and parses DBC files containing CAN message and signal definitions
 - **C Code Generation**: Generates header (.h) and source (.c) files with decoding functions
 - **Type Safety**: Generates strongly-typed structures for messages and signals
+- **MQTT Topic Mapping**: Supports defining MQTT topics per signal using TP_ instruction
 - **Signal Decoding**: Handles various signal properties including:
   - Little-endian byte ordering (only little-endian is currently supported)
   - Signed/unsigned values
