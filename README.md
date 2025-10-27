@@ -65,7 +65,7 @@ Vera expects DBC files with the following format:
 ```
 BO_ <message_id> <message_name>: <dlc> <transmitter>
     SG_ <signal_name> : <start_byte>|<length>@<endianness><sign> (<factor>,<offset>) [<min>|<max>] "<unit>" <receivers>
-    TP_ <signal_name> "<mqtt_topic>"
+    TP_ <signal_name> <mqtt_topic>
 ```
 
 > **Note**: DLC (Data Length Code), Start Byte, and Length are all expressed in **bytes**.
@@ -77,9 +77,9 @@ BO_ <message_id> <message_name>: <dlc> <transmitter>
 ```
 BO_ 123 EngineSpeed: 6 Engine
     SG_ EngineSpeed : 0|4@1+ (0.1,0) [0|8000] "RPM" DriverGateway
-    TP_ EngineSpeed "vehicle/engine/speed"
+    TP_ EngineSpeed vehicle/engine/speed
     SG_ BatteryTemperature : 4|2@1+ (1,0) [0|8000] "ºC" DriverGateway
-    TP_ BatteryTemperature "vehicle/battery/temperature"
+    TP_ BatteryTemperature vehicle/battery/temperature
 ```
 
 ## Generated Code
