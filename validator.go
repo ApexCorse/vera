@@ -1,4 +1,4 @@
-package parser
+package vera
 
 import "fmt"
 

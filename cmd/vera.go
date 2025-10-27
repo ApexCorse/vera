@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ApexCorse/vera/internal/codegen"
-	"github.com/ApexCorse/vera/internal/parser"
+	"github.com/ApexCorse/vera"
+	"github.com/ApexCorse/vera/codegen"
 )
 
 func main() {
@@ -29,7 +29,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	config, err := parser.Parse(dbcFile)
+	config, err := vera.Parse(dbcFile)
 	if err != nil {
 		fmt.Println("fatal: error in parsing dbc file: ", err.Error())
 		os.Exit(1)

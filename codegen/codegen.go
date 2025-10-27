@@ -5,17 +5,17 @@ import (
 	"io"
 	"strings"
 
-	"github.com/ApexCorse/vera/internal/parser"
+	"github.com/ApexCorse/vera"
 )
 
-func GenerateHeader(w io.Writer, config *parser.Config) error {
+func GenerateHeader(w io.Writer, config *vera.Config) error {
 	if _, err := w.Write([]byte(includeFile)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func GenerateSource(w io.Writer, config *parser.Config, headerFile string) error {
+func GenerateSource(w io.Writer, config *vera.Config, headerFile string) error {
 	var sb strings.Builder
 
 	if headerFile != "" {
