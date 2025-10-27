@@ -28,7 +28,7 @@ func (m *Message) Validate() error {
 		totalLengths += s.Length
 	}
 	if totalLengths > m.Length {
-		return ErrorSignalLengthsGreaterThanMessageLegnth
+		return ErrorSignalLengthsGreaterThanMessageLength
 	}
 
 	return nil
