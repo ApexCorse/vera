@@ -25,12 +25,18 @@ Vera is a code generation tool that parses DBC (Database Container) files and ge
 
 - Go 1.25.1 or later
 
+### Install via go install
+
+```bash
+go install github.com/ApexCorse/vera@latest
+```
+
 ### Build from Source
 
 ```bash
 git clone https://github.com/ApexCorse/vera.git
 cd vera
-go build -o vera ./cmd
+go build -o vera .
 ```
 
 ## Usage
@@ -132,8 +138,7 @@ go test ./...
 ```
 .
 ├── README.md
-├── cmd/                  # Command-line interface
-│   └── vera.go
+├── main.go               # Command-line interface entry point
 ├── gentest/              # Test files and examples
 │   ├── CMakeLists.txt
 │   ├── config-test.dbc
@@ -146,7 +151,7 @@ go test ./...
     ├── codegen/         # C code generator
     │   ├── codegen.go
     │   └── templates.go
-    └── parser/          # DBC file parser
+    └── vera/            # DBC file parser
         ├── errors.go
         ├── parser.go
         ├── parser_test.go

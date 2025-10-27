@@ -5,7 +5,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/ApexCorse/vera"
+	"github.com/ApexCorse/vera/internal/vera"
 )
 
 func GenerateHeader(w io.Writer, config *vera.Config) error {

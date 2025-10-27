@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ApexCorse/vera"
-	"github.com/ApexCorse/vera/codegen"
+	"github.com/ApexCorse/vera/internal/codegen"
+	"github.com/ApexCorse/vera/internal/vera"
 )
 
 func main() {
