@@ -1,4 +1,4 @@
-package parser
+package vera
 
 type Config struct {
 	Messages []Message
