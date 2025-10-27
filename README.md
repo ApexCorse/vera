@@ -12,7 +12,7 @@ Vera is a code generation tool that parses DBC (Database Container) files and ge
 - **C Code Generation**: Generates header (.h) and source (.c) files with decoding functions
 - **Type Safety**: Generates strongly-typed structures for messages and signals
 - **Signal Decoding**: Handles various signal properties including:
-  - Byte ordering (endianness)
+  - Little-endian byte ordering (only little-endian is currently supported)
   - Signed/unsigned values
   - Scaling factors and offsets
   - Min/max validation
@@ -64,14 +64,21 @@ Vera expects DBC files with the following format:
 ```
 BO_ <message_id> <message_name>: <dlc> <transmitter>
     SG_ <signal_name> : <start_byte>|<length>@<endianness><sign> (<factor>,<offset>) [<min>|<max>] "<unit>" <receivers>
+    TP_ <signal_name> "<mqtt_topic>"
 ```
+
+> **Note**: DLC (Data Length Code), Start Byte, and Length are all expressed in **bytes**.
+
+> **Note**: Receivers are currently parsed but not used in code generation.
 
 ### Example DBC File
 
 ```
 BO_ 123 EngineSpeed: 6 Engine
     SG_ EngineSpeed : 0|4@1+ (0.1,0) [0|8000] "RPM" DriverGateway
+    TP_ EngineSpeed "vehicle/engine/speed"
     SG_ BatteryTemperature : 4|2@1+ (1,0) [0|8000] "ºC" DriverGateway
+    TP_ BatteryTemperature "vehicle/battery/temperature"
 ```
 
 ## Generated Code
@@ -119,12 +126,28 @@ go test ./...
 
 ```
 .
+├── README.md
 ├── cmd/                  # Command-line interface
 │   └── vera.go
-├── internal/
-│   ├── parser/          # DBC file parser
-│   └── codegen/         # C code generator
-└── gentest/             # Test files and examples
+├── gentest/              # Test files and examples
+│   ├── CMakeLists.txt
+│   ├── config-test.dbc
+│   ├── test.c
+│   ├── test.sh
+│   └── unity/           # Unity test framework
+├── go.mod
+├── go.sum
+└── internal/
+    ├── codegen/         # C code generator
+    │   ├── codegen.go
+    │   └── templates.go
+    └── parser/          # DBC file parser
+        ├── errors.go
+        ├── parser.go
+        ├── parser_test.go
+        ├── types.go
+        ├── utils.go
+        └── validator.go
 ```
 
 ## License
