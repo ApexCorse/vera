@@ -74,6 +74,8 @@ TP_ <signal_name> <mqtt_topic>
 
 > **Note**: The `(<integer_figures>,<decimal_figures>)` parameter is optional and specifies the fixed number of digits for both integer and decimal parts of the signal value when displayed. If omitted, no specific formatting is enforced.
 
+> **Note**: The `TP_` instruction is used to associate an MQTT topic with a specific signal (referenced by `<signal_name>`). It is placed at the same level as `BO_` instructions, not indented under them.
+
 ### Example DBC File
 
 ```
