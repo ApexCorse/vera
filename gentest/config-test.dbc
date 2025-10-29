@@ -1,3 +1,5 @@
 BO_ 123 EngineSpeed: 6 Engine
 	SG_ EngineSpeed : 0|4@1+ (0.1,0) [0|8000] "RPM" DriverGateway
 	SG_ BatteryTemperature : 4|2@1+(12,4) (1,0) [0|8000] "ºC" DriverGateway
+
+TP_ EngineSpeed Engine/Metrics/Speed

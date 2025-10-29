@@ -34,6 +34,7 @@ typedef struct {
 	float   max;
 	char*   unit;
 	char**  receivers;
+	char*   topic;
 } vera_signal_t;
 
 typedef struct {
@@ -50,6 +51,7 @@ typedef struct {
 	char*    unit;
 	float    value;
 	uint64_t timestamp;
+	char*    topic;
 } vera_decoded_signal_t;
 
 typedef struct {
@@ -107,7 +109,16 @@ vera_err_t vera_decode_can_frame(
 		free(res->name);
 		return vera_err_allocation;
 	}
-	
+
+	if (strlen(signal->topic) > 0) {
+		res->topic = strdup(signal->topic);
+		if (!res->topic) {
+			free(res->name);
+			free(res->unit);
+			return vera_err_allocation;
+		}
+	}
+
 	if (signal->start_byte >= frame->dlc || signal->start_byte + signal->dlc > frame->dlc) {
 		free(res->name);
 		free(res->unit);

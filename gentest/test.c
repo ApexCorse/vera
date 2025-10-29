@@ -23,6 +23,7 @@ void test_successful_decoding(void) {
 	vera_decoded_signal_t* decoded_signals = result.decoded_signals;
 	TEST_ASSERT_EQUAL_STRING("RPM", decoded_signals[0].unit);
 	TEST_ASSERT_EQUAL_STRING("EngineSpeed", decoded_signals[0].name); 
+	TEST_ASSERT_EQUAL_STRING("Engine/Metrics/Speed", decoded_signals[0].topic);
 	TEST_ASSERT_FLOAT_WITHIN(0.01, 5.412, decoded_signals[0].value);
 	TEST_ASSERT_EQUAL_STRING("ºC", decoded_signals[1].unit);
 	TEST_ASSERT_EQUAL_STRING("BatteryTemperature", decoded_signals[1].name);
