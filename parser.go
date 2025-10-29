@@ -351,12 +351,6 @@ Should be:
 	TP_ <SignalName> <Topic>`, topicLine)
 	}
 
-	if lineParts[0] != "TP_" {
-		return nil, fmt.Errorf(`signal topic has wrong structure: %s
-Should be:
-	TP_ <SignalName> <Topic>`, topicLine)
-	}
-
 	signalName := lineParts[1]
 	topic := lineParts[2]
 
