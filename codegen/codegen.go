@@ -65,6 +65,7 @@ func GenerateSource(w io.Writer, config *vera.Config, headerFile string) error {
 				.offset = %.4f,
 				.min = %.4f,
 				.max = %.4f,
+				.topic = "%s"
 			};`,
 				i,
 				s.Name,
@@ -79,6 +80,7 @@ func GenerateSource(w io.Writer, config *vera.Config, headerFile string) error {
 				s.Offset,
 				s.Min,
 				s.Max,
+				s.Topic,
 			))
 		}
 

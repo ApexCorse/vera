@@ -19,4 +19,5 @@ var (
 	ErrorSignalLengthsGreaterThanMessageLegnth = errors.New("sum of signal lengths is greater than message length")
 	ErrorSignalFactorIsZero                    = errors.New("signal factor cannot be zero")
 	ErrorSignalFigures                         = errors.New("sum of integer and decimal figures must be equal to Length * 8")
+	ErrorInvalidSignalTopic                    = errors.New("signal topic is invalid")
 )

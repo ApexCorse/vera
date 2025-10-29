@@ -32,26 +32,32 @@ func Parse(r io.Reader) (*Config, error) {
 	}
 
 	for i := 0; i < len(lines); i++ {
-		if !strings.HasPrefix(lines[i], "BO_") {
-			continue
-		}
-		messageInstruction := lines[i]
+		if strings.HasPrefix(lines[i], "BO_") {
+			messageInstruction := lines[i]
 
-		for j := i + 1; j < len(lines); j++ {
-			if !strings.HasPrefix(lines[j], "\tSG_") {
-				i = j - 1
-				break
+			for j := i + 1; j < len(lines); j++ {
+				if !strings.HasPrefix(lines[j], "\tSG_") {
+					i = j - 1
+					break
+				}
+
+				messageInstruction += "\n" + lines[j]
 			}
 
-			messageInstruction += "\n" + lines[j]
-		}
+			messageConfig, err := parseMessageInstruction(messageInstruction)
+			if err != nil {
+				return nil, err
+			}
 
-		messageConfig, err := parseMessageInstruction(messageInstruction)
-		if err != nil {
-			return nil, err
-		}
+			config.Messages = append(config.Messages, *messageConfig)
+		} else if strings.HasPrefix(lines[i], "TP_") {
+			signalTopic, err := parseSignalTopic(lines[i])
+			if err != nil {
+				return nil, err
+			}
 
-		config.Messages = append(config.Messages, *messageConfig)
+			config.Topics = append(config.Topics, *signalTopic)
+		}
 	}
 
 	return config, nil
@@ -335,4 +341,29 @@ func parseMessageReceivers(signal *Signal, signalReceivers string) {
 	for _, r := range receiversStr {
 		signal.Receivers = append(signal.Receivers, Node(r))
 	}
+}
+
+func parseSignalTopic(topicLine string) (*SignalTopic, error) {
+	lineParts := strings.Fields(topicLine)
+	if len(lineParts) != 3 {
+		return nil, fmt.Errorf(`signal topic has wrong structure: %s
+Should be:
+	TP_ <SignalName> <Topic>`, topicLine)
+	}
+
+	if lineParts[0] != "TP_" {
+		return nil, fmt.Errorf(`signal topic has wrong structure: %s
+Should be:
+	TP_ <SignalName> <Topic>`, topicLine)
+	}
+
+	signalName := lineParts[1]
+	topic := lineParts[2]
+
+	signalTopic := &SignalTopic{
+		Topic:  topic,
+		Signal: signalName,
+	}
+
+	return signalTopic, nil
 }

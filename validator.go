@@ -3,9 +3,27 @@ package vera
 import "fmt"
 
 func (c *Config) Validate() error {
+	topicsMap := make(map[string]string)
+	for i, t := range c.Topics {
+		if err := t.Validate(); err != nil {
+			return fmt.Errorf("message Nº%d: %w", i, err)
+		}
+
+		if _, ok := topicsMap[t.Signal]; ok {
+			return fmt.Errorf("duplicate signal topic: %s", t.Topic)
+		}
+		topicsMap[t.Signal] = t.Topic
+	}
+
 	for i, m := range c.Messages {
 		if err := m.Validate(); err != nil {
 			return fmt.Errorf("message Nº%d: %s", i, err.Error())
+		}
+
+		for i := range m.Signals {
+			if value, ok := topicsMap[m.Signals[i].Name]; ok {
+				m.Signals[i].Topic = value
+			}
 		}
 	}
 
@@ -48,6 +66,14 @@ func (s *Signal) Validate() error {
 	if (s.IntegerFigures > 0 || s.DecimalFigures > 0) &&
 		s.IntegerFigures+s.DecimalFigures != s.Length*8 {
 		return ErrorSignalFigures
+	}
+
+	return nil
+}
+
+func (t *SignalTopic) Validate() error {
+	if t.Signal == "" || t.Topic == "" {
+		return ErrorInvalidSignalTopic
 	}
 
 	return nil

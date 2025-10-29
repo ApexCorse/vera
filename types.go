@@ -2,6 +2,7 @@ package vera
 
 type Config struct {
 	Messages []Message
+	Topics   []SignalTopic
 }
 
 type Message struct {
@@ -26,6 +27,7 @@ type Signal struct {
 	Max            float32
 	Unit           string
 	Receivers      []Node
+	Topic          string
 }
 
 type Node string
@@ -36,3 +38,8 @@ const (
 	LittleEndian Endianness = iota
 	BigEndian
 )
+
+type SignalTopic struct {
+	Topic  string
+	Signal string
+}
