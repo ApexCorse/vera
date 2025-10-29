@@ -6,7 +6,7 @@ func (c *Config) Validate() error {
 	topicsMap := make(map[string]string)
 	for i, t := range c.Topics {
 		if err := t.Validate(); err != nil {
-			return fmt.Errorf("message Nº%d: %w", i, err)
+			return fmt.Errorf("topic Nº%d: %w", i, err)
 		}
 
 		if _, ok := topicsMap[t.Signal]; ok {
