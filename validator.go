@@ -15,14 +15,14 @@ func (c *Config) Validate() error {
 		topicsMap[t.Signal] = t.Topic
 	}
 
-	for i, m := range c.Messages {
-		if err := m.Validate(); err != nil {
+	for i := range c.Messages {
+		if err := c.Messages[i].Validate(); err != nil {
 			return fmt.Errorf("message Nº%d: %s", i, err.Error())
 		}
 
-		for i := range m.Signals {
-			if value, ok := topicsMap[m.Signals[i].Name]; ok {
-				m.Signals[i].Topic = value
+		for j := range c.Messages[i].Signals {
+			if value, ok := topicsMap[c.Messages[i].Signals[j].Name]; ok {
+				c.Messages[i].Signals[j].Topic = value
 			}
 		}
 	}
