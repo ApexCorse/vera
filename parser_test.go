@@ -212,3 +212,387 @@ func TestParseMessageSignals(t *testing.T) {
 		a.Nil(signals)
 	})
 }
+
+func TestParseMessageID(t *testing.T) {
+	t.Run("should parse decimal message ID", func(t *testing.T) {
+		a := assert.New(t)
+
+		messageID, err := parseMessageID("123")
+		a.Nil(err)
+		a.Equal(uint32(123), messageID)
+	})
+
+	t.Run("should parse hexadecimal message ID", func(t *testing.T) {
+		a := assert.New(t)
+
+		messageID, err := parseMessageID("0x7B")
+		a.Nil(err)
+		a.Equal(uint32(123), messageID)
+	})
+
+	t.Run("should return error for invalid decimal ID", func(t *testing.T) {
+		a := assert.New(t)
+
+		messageID, err := parseMessageID("abc")
+		a.Equal(ErrorMessageIDNotInteger, err)
+		a.Equal(uint32(0), messageID)
+	})
+
+	t.Run("should return error for invalid hexadecimal ID", func(t *testing.T) {
+		a := assert.New(t)
+
+		messageID, err := parseMessageID("0xGHI")
+		a.Equal(ErrorMessageIDNotInteger, err)
+		a.Equal(uint32(0), messageID)
+	})
+}
+
+func TestParseSignalTopic(t *testing.T) {
+	t.Run("should parse valid signal topic", func(t *testing.T) {
+		a := assert.New(t)
+
+		topic, err := parseSignalTopic("TP_ EngineSpeed vehicle/engine/speed")
+		a.Nil(err)
+		a.NotNil(topic)
+		a.Equal("EngineSpeed", topic.Signal)
+		a.Equal("vehicle/engine/speed", topic.Topic)
+	})
+
+	t.Run("should return error for invalid structure", func(t *testing.T) {
+		a := assert.New(t)
+
+		topic, err := parseSignalTopic("TP_ EngineSpeed")
+		a.Error(err)
+		a.Nil(topic)
+		a.Contains(err.Error(), "signal topic has wrong structure")
+	})
+
+	t.Run("should return error for too many fields", func(t *testing.T) {
+		a := assert.New(t)
+
+		topic, err := parseSignalTopic("TP_ EngineSpeed vehicle/engine/speed extra")
+		a.Error(err)
+		a.Nil(topic)
+	})
+}
+
+func TestParse_WithTopics(t *testing.T) {
+	t.Run("should parse config with topics", func(t *testing.T) {
+		a := assert.New(t)
+
+		configStr := `BO_ 123 EngineSpeed: 8 Engine
+	SG_ Speed : 0|2@1+ (0.1,0) [0|100] "km/h" Gateway
+TP_ Speed vehicle/engine/speed`
+		reader := strings.NewReader(configStr)
+
+		config, err := Parse(reader)
+		a.Nil(err)
+		a.NotNil(config)
+		a.Len(config.Messages, 1)
+		a.Len(config.Topics, 1)
+		a.Equal("Speed", config.Topics[0].Signal)
+		a.Equal("vehicle/engine/speed", config.Topics[0].Topic)
+	})
+
+	t.Run("should return empty config for empty input", func(t *testing.T) {
+		a := assert.New(t)
+
+		configStr := ``
+		reader := strings.NewReader(configStr)
+
+		config, err := Parse(reader)
+		a.Nil(err)
+		a.NotNil(config)
+		a.Len(config.Messages, 0)
+		a.Len(config.Topics, 0)
+	})
+
+	t.Run("should skip lines that are not BO_ or TP_", func(t *testing.T) {
+		a := assert.New(t)
+
+		configStr := `CM_ "This is a comment"
+BO_ 123 EngineSpeed: 8 Engine
+	SG_ Speed : 0|2@1+ (0.1,0) [0|100] "km/h" Gateway
+BA_ "AttributeName" "AttributeValue"
+TP_ Speed vehicle/engine/speed`
+		reader := strings.NewReader(configStr)
+
+		config, err := Parse(reader)
+		a.Nil(err)
+		a.NotNil(config)
+		a.Len(config.Messages, 1)
+		a.Len(config.Topics, 1)
+	})
+}
+
+func TestParseMessageBytesInfo(t *testing.T) {
+	t.Run("should parse bytes info with little endian", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageBytesInfo(signal, 0, "0|16@0+")
+		a.Nil(err)
+		a.Equal(uint8(0), signal.StartByte)
+		a.Equal(uint8(16), signal.Length)
+		a.Equal(LittleEndian, signal.Endianness)
+		a.False(signal.Signed)
+	})
+
+	t.Run("should parse bytes info with signed signal", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageBytesInfo(signal, 0, "0|16@1-")
+		a.Nil(err)
+		a.Equal(uint8(0), signal.StartByte)
+		a.Equal(uint8(16), signal.Length)
+		a.Equal(BigEndian, signal.Endianness)
+		a.True(signal.Signed)
+	})
+
+	t.Run("should return error for invalid @ separator", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageBytesInfo(signal, 0, "0|16")
+		a.Error(err)
+		a.Contains(err.Error(), "invalid bytes info")
+	})
+
+	t.Run("should return error for invalid pipe separator", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageBytesInfo(signal, 0, "016@1+")
+		a.Error(err)
+		a.Contains(err.Error(), "invalid start byte and length")
+	})
+
+	t.Run("should return error for invalid start byte", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageBytesInfo(signal, 0, "abc|16@1+")
+		a.Error(err)
+		a.Contains(err.Error(), "invalid start byte")
+	})
+
+	t.Run("should return error for invalid length", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageBytesInfo(signal, 0, "0|abc@1+")
+		a.Error(err)
+		a.Contains(err.Error(), "invalid length")
+	})
+
+	t.Run("should return error for invalid endianness", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageBytesInfo(signal, 0, "0|16@x+")
+		a.Error(err)
+		a.Contains(err.Error(), "invalid byte order")
+	})
+
+	t.Run("should return error for invalid signed character", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageBytesInfo(signal, 0, "0|16@1x")
+		a.Error(err)
+		a.Contains(err.Error(), "invalid signed")
+	})
+
+	t.Run("should return error for too short other info", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageBytesInfo(signal, 0, "0|16@1")
+		a.Error(err)
+		a.Contains(err.Error(), "invalid byte order and signed")
+	})
+
+	t.Run("should return error for invalid decimal format parenthesis", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageBytesInfo(signal, 0, "0|16@1+[4,4]")
+		a.Error(err)
+		a.Contains(err.Error(), "invalid decimal format")
+	})
+
+	t.Run("should return error for invalid decimal format structure", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageBytesInfo(signal, 0, "0|16@1+(4)")
+		a.Error(err)
+		a.Contains(err.Error(), "invalid decimal format")
+	})
+
+	t.Run("should return error for invalid integer figures", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageBytesInfo(signal, 0, "0|16@1+(a,4)")
+		a.Error(err)
+		a.Contains(err.Error(), "invalid decimal format")
+	})
+
+	t.Run("should return error for invalid decimal figures", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageBytesInfo(signal, 0, "0|16@1+(4,b)")
+		a.Error(err)
+		a.Contains(err.Error(), "invalid decimal format")
+	})
+}
+
+func TestParseMessageFactorOffset(t *testing.T) {
+	t.Run("should parse factor and offset", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageFactorOffset(signal, 0, "(0.5,-10)")
+		a.Nil(err)
+		a.Equal(float32(0.5), signal.Factor)
+		a.Equal(float32(-10), signal.Offset)
+	})
+
+	t.Run("should return error for missing parentheses", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageFactorOffset(signal, 0, "0.5,-10")
+		a.Error(err)
+		a.Contains(err.Error(), "invalid factor and offset")
+	})
+
+	t.Run("should return error for invalid structure", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageFactorOffset(signal, 0, "(0.5)")
+		a.Error(err)
+		a.Contains(err.Error(), "invalid factor and offset")
+	})
+
+	t.Run("should return error for invalid factor", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageFactorOffset(signal, 0, "(abc,-10)")
+		a.Error(err)
+		a.Contains(err.Error(), "invalid factor")
+	})
+
+	t.Run("should return error for invalid offset", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageFactorOffset(signal, 0, "(0.5,xyz)")
+		a.Error(err)
+		a.Contains(err.Error(), "invalid offset")
+	})
+}
+
+func TestParseMessageMinMax(t *testing.T) {
+	t.Run("should parse min and max", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageMinMax(signal, 0, "[-40|150]")
+		a.Nil(err)
+		a.Equal(float32(-40), signal.Min)
+		a.Equal(float32(150), signal.Max)
+	})
+
+	t.Run("should return error for missing brackets", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageMinMax(signal, 0, "-40|150")
+		a.Error(err)
+		a.Contains(err.Error(), "invalid min/max")
+	})
+
+	t.Run("should return error for invalid structure", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageMinMax(signal, 0, "[-40]")
+		a.Error(err)
+		a.Contains(err.Error(), "invalid min/max")
+	})
+
+	t.Run("should return error for invalid min", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageMinMax(signal, 0, "[abc|150]")
+		a.Error(err)
+		a.Contains(err.Error(), "invalid min")
+	})
+
+	t.Run("should return error for invalid max", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageMinMax(signal, 0, "[-40|xyz]")
+		a.Error(err)
+		a.Contains(err.Error(), "invalid max")
+	})
+}
+
+func TestParseMessageUnit(t *testing.T) {
+	t.Run("should parse unit", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageUnit(signal, 0, "\"km/h\"")
+		a.Nil(err)
+		a.Equal("km/h", signal.Unit)
+	})
+
+	t.Run("should return error for missing quotes", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageUnit(signal, 0, "km/h")
+		a.Error(err)
+		a.Contains(err.Error(), "invalid unit")
+	})
+
+	t.Run("should handle empty unit", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		err := parseMessageUnit(signal, 0, "\"\"")
+		a.Nil(err)
+		a.Equal("", signal.Unit)
+	})
+}
+
+func TestParseMessageReceivers(t *testing.T) {
+	t.Run("should parse single receiver", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		parseMessageReceivers(signal, "Gateway")
+		a.Len(signal.Receivers, 1)
+		a.Equal(Node("Gateway"), signal.Receivers[0])
+	})
+
+	t.Run("should parse multiple receivers", func(t *testing.T) {
+		a := assert.New(t)
+
+		signal := &Signal{}
+		parseMessageReceivers(signal, "Gateway,Engine,Driver")
+		a.Len(signal.Receivers, 3)
+		a.Equal(Node("Gateway"), signal.Receivers[0])
+		a.Equal(Node("Engine"), signal.Receivers[1])
+		a.Equal(Node("Driver"), signal.Receivers[2])
+	})
+}
