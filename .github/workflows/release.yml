@@ -31,7 +31,7 @@ jobs:
           - goos: darwin
             goarch: arm64
             output: vera-darwin-arm64
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -58,7 +58,7 @@ jobs:
     name: Create Release
     needs: build
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
