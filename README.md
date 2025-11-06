@@ -127,6 +127,26 @@ if (err == vera_err_ok) {
 go test ./...
 ```
 
+### Building from Source
+
+```bash
+go build ./cmd/vera
+```
+
+### Creating a Release
+
+Releases are automatically created when a tag is pushed to the repository:
+
+```bash
+git tag -a v1.0.0 -m "Release v1.0.0"
+git push origin v1.0.0
+```
+
+The GitHub Actions workflow will automatically:
+- Build binaries for Linux (amd64), Windows (amd64), macOS Intel (amd64), and macOS Apple Silicon (arm64)
+- Create a GitHub release with auto-generated release notes
+- Upload all platform binaries as release assets
+
 ### Project Structure
 
 ```
