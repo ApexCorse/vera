@@ -1,7 +1,10 @@
 package codegen
 
 const (
-	includeFile = `#include <stdbool.h>
+	includeFile = `#ifndef VERA_H
+#define VERA_H
+
+#include <stdbool.h>
 #include <stdlib.h>
 
 #define CAN_MAX_DATA_LEN 8
@@ -68,7 +71,9 @@ typedef enum {
 vera_err_t vera_decode_can_frame(
 	vera_can_rx_frame_t*   frame,
 	vera_decoding_result_t* result
-);`
+);
+
+#endif // VERA_H`
 	sourceFileIncludes = `#include <strings.h>
 #include <stdio.h>
 #include <math.h>`
