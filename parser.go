@@ -7,14 +7,14 @@ import (
 	"strings"
 )
 
-type intermediateSignalParsing struct {
-	name         string
-	byteInfo     string
-	factorOffset string
-	minMax       string
-	unit         string
-	receivers    string
-}
+// type intermediateSignalParsing struct {
+// 	name         string
+// 	bitInfo      string
+// 	factorOffset string
+// 	minMax       string
+// 	unit         string
+// 	receivers    string
+// }
 
 func Parse(r io.Reader) (*Config, error) {
 	bytes, err := io.ReadAll(r)
@@ -164,19 +164,19 @@ func parseMessageSignals(messageSignals string) ([]Signal, error) {
 		lineParts := strings.Fields(line)
 		if len(lineParts) < 7 {
 			return nil, fmt.Errorf(`signal line %d is not well structured, must adhere to:
-SG_ <SignalName> : <StartByte>|<Length>@<ByteOrder><Signed> (<Factor>,<Offset>) [<Min>,<Max>] "<Unit>" <...Receivers>`, i)
+SG_ <SignalName> : <StartBit>|<Length>@<BitOrder><Signed> (<Factor>,<Offset>) [<Min>,<Max>] "<Unit>" <...Receivers>`, i)
 		}
 
 		if lineParts[2] != ":" {
-			return nil, fmt.Errorf("signal line %d has not a ':' between <SignalName> and <StartByte>", i)
+			return nil, fmt.Errorf("signal line %d has not a ':' between <SignalName> and <StartBit>", i)
 		}
 
 		signal := Signal{
 			Name: lineParts[1],
 		}
 
-		signalBytesInfo := lineParts[3]
-		if err := parseMessageBytesInfo(&signal, i, signalBytesInfo); err != nil {
+		signalBitInfo := lineParts[3]
+		if err := parseMessageBitInfo(&signal, i, signalBitInfo); err != nil {
 			return nil, err
 		}
 
@@ -203,33 +203,33 @@ SG_ <SignalName> : <StartByte>|<Length>@<ByteOrder><Signed> (<Factor>,<Offset>) 
 	return signalsSlice, nil
 }
 
-func parseMessageBytesInfo(signal *Signal, i int, signalBytesInfo string) error {
-	signalBytesFirstSplit := strings.Split(signalBytesInfo, "@")
-	if len(signalBytesFirstSplit) != 2 {
-		return fmt.Errorf("signal line %d has invalid bytes info: %s", i, signalBytesInfo)
+func parseMessageBitInfo(signal *Signal, i int, signalBitInfo string) error {
+	signalBitFirstSplit := strings.Split(signalBitInfo, "@")
+	if len(signalBitFirstSplit) != 2 {
+		return fmt.Errorf("signal line %d has invalid bit info: %s", i, signalBitInfo)
 	}
 
-	signalStartByteAndLength := strings.Split(signalBytesFirstSplit[0], "|")
-	if len(signalStartByteAndLength) != 2 {
-		return fmt.Errorf("signal line %d has invalid start byte and length: %s", i, signalBytesFirstSplit[0])
+	signalStartBitAndLength := strings.Split(signalBitFirstSplit[0], "|")
+	if len(signalStartBitAndLength) != 2 {
+		return fmt.Errorf("signal line %d has invalid start bit and length: %s", i, signalBitFirstSplit[0])
 	}
-	signalStartByte, err := strconv.Atoi(signalStartByteAndLength[0])
+	signalStartBit, err := strconv.Atoi(signalStartBitAndLength[0])
 	if err != nil {
-		return fmt.Errorf("signal line %d has invalid start byte: %s", i, signalStartByteAndLength[0])
+		return fmt.Errorf("signal line %d has invalid start bit: %s", i, signalStartBitAndLength[0])
 	}
-	signalLength, err := strconv.Atoi(signalStartByteAndLength[1])
+	signalLength, err := strconv.Atoi(signalStartBitAndLength[1])
 	if err != nil {
-		return fmt.Errorf("signal line %d has invalid length: %s", i, signalStartByteAndLength[1])
+		return fmt.Errorf("signal line %d has invalid length: %s", i, signalStartBitAndLength[1])
 	}
 
-	signalOtherInfo := signalBytesFirstSplit[1]
+	signalOtherInfo := signalBitFirstSplit[1]
 	if len(signalOtherInfo) < 2 {
-		return fmt.Errorf("signal line %d has invalid byte order and signed: %s", i, signalOtherInfo)
+		return fmt.Errorf("signal line %d has invalid bit order and signed: %s", i, signalOtherInfo)
 	}
 
 	signalEndianness, err := strconv.ParseUint(string(signalOtherInfo[0]), 10, 1)
 	if err != nil {
-		return fmt.Errorf("signal line %d has invalid byte order: %s", i, string(signalOtherInfo[0]))
+		return fmt.Errorf("signal line %d has invalid bit order: %s", i, string(signalOtherInfo[0]))
 	}
 	var signalSigned bool
 	switch signalOtherInfo[1] {
@@ -244,7 +244,7 @@ func parseMessageBytesInfo(signal *Signal, i int, signalBytesInfo string) error 
 	signal.Endianness = Endianness(signalEndianness)
 	signal.Length = uint8(signalLength)
 	signal.Signed = signalSigned
-	signal.StartByte = uint8(signalStartByte)
+	signal.StartBit = uint8(signalStartBit)
 
 	if len(signalOtherInfo) == 2 {
 		return nil

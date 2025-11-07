@@ -14,9 +14,9 @@ type Message struct {
 }
 
 type Signal struct {
-	Name      string
-	StartByte uint8
-	Length    uint8
+	Name     string
+	StartBit uint8
+	Length   uint8
 	Endianness
 	Signed         bool
 	IntegerFigures uint8

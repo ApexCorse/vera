@@ -23,7 +23,7 @@ func GenerateSource(w io.Writer, config *vera.Config, headerFile string) error {
 	}
 
 	sb.WriteString(sourceFileIncludes + "\n\n")
-	sb.WriteString(valueParsingFunctions + "\n\n")
+	sb.WriteString(utilFunctions + "\n\n")
 	sb.WriteString(decodeSignalFunc + "\n\n")
 	sb.WriteString(decodeMessageFunc + "\n\n")
 
@@ -55,7 +55,7 @@ func GenerateSource(w io.Writer, config *vera.Config, headerFile string) error {
 			message.signals[%d] = (vera_signal_t){
 				.name = "%s",
 				.unit = "%s",
-				.start_byte = %d,
+				.start_bit = %d,
 				.dlc = %d,
 				.endianness = %d,
 				.sign = %t,
@@ -70,7 +70,7 @@ func GenerateSource(w io.Writer, config *vera.Config, headerFile string) error {
 				i,
 				s.Name,
 				s.Unit,
-				s.StartByte,
+				s.StartBit,
 				s.Length,
 				s.Endianness,
 				s.Signed,
