@@ -19,12 +19,12 @@ func TestConfigValidate(t *testing.T) {
 					Transmitter: "Engine",
 					Signals: []Signal{
 						{
-							Name:      "Speed",
-							StartByte: 0,
-							Length:    2,
-							Factor:    0.1,
-							Min:       0,
-							Max:       100,
+							Name:     "Speed",
+							StartBit: 0,
+							Length:   2,
+							Factor:   0.1,
+							Min:      0,
+							Max:      100,
 						},
 					},
 				},
@@ -111,12 +111,12 @@ func TestMessageValidate(t *testing.T) {
 			Transmitter: "Engine",
 			Signals: []Signal{
 				{
-					Name:      "Speed",
-					StartByte: 0,
-					Length:    2,
-					Factor:    0.1,
-					Min:       0,
-					Max:       100,
+					Name:     "Speed",
+					StartBit: 0,
+					Length:   2,
+					Factor:   0.1,
+					Min:      0,
+					Max:      100,
 				},
 			},
 		}
@@ -149,16 +149,16 @@ func TestMessageValidate(t *testing.T) {
 			Transmitter: "Engine",
 			Signals: []Signal{
 				{
-					Name:      "Speed",
-					StartByte: 0,
-					Length:    3,
-					Factor:    0.1,
+					Name:     "Speed",
+					StartBit: 0,
+					Length:   3,
+					Factor:   0.1,
 				},
 				{
-					Name:      "Temp",
-					StartByte: 3,
-					Length:    3,
-					Factor:    1.0,
+					Name:     "Temp",
+					StartBit: 3,
+					Length:   3,
+					Factor:   1.0,
 				},
 			},
 		}
@@ -177,10 +177,10 @@ func TestMessageValidate(t *testing.T) {
 			Transmitter: "Engine",
 			Signals: []Signal{
 				{
-					Name:      "Speed",
-					StartByte: 0,
-					Length:    2,
-					Factor:    0, // Invalid: factor is zero
+					Name:     "Speed",
+					StartBit: 0,
+					Length:   2,
+					Factor:   0, // Invalid: factor is zero
 				},
 			},
 		}
@@ -196,40 +196,40 @@ func TestSignalValidate(t *testing.T) {
 		a := assert.New(t)
 
 		signal := &Signal{
-			Name:      "Speed",
-			StartByte: 0,
-			Length:    2,
-			Factor:    0.1,
-			Min:       0,
-			Max:       100,
+			Name:     "Speed",
+			StartBit: 0,
+			Length:   2,
+			Factor:   0.1,
+			Min:      0,
+			Max:      100,
 		}
 
 		err := signal.Validate()
 		a.Nil(err)
 	})
 
-	t.Run("should return error when start byte > 8", func(t *testing.T) {
+	t.Run("should return error when start bit > 8", func(t *testing.T) {
 		a := assert.New(t)
 
 		signal := &Signal{
-			Name:      "Speed",
-			StartByte: 9,
-			Length:    2,
-			Factor:    0.1,
+			Name:     "Speed",
+			StartBit: 9,
+			Length:   2,
+			Factor:   0.1,
 		}
 
 		err := signal.Validate()
-		a.Equal(ErrorSignalStartByteOutOfBounds, err)
+		a.Equal(ErrorSignalStartBitOutOfBounds, err)
 	})
 
 	t.Run("should return error when length > 8", func(t *testing.T) {
 		a := assert.New(t)
 
 		signal := &Signal{
-			Name:      "Speed",
-			StartByte: 0,
-			Length:    9,
-			Factor:    0.1,
+			Name:     "Speed",
+			StartBit: 0,
+			Length:   9,
+			Factor:   0.1,
 		}
 
 		err := signal.Validate()
@@ -240,10 +240,10 @@ func TestSignalValidate(t *testing.T) {
 		a := assert.New(t)
 
 		signal := &Signal{
-			Name:      "Speed",
-			StartByte: 0,
-			Length:    2,
-			Factor:    0,
+			Name:     "Speed",
+			StartBit: 0,
+			Length:   2,
+			Factor:   0,
 		}
 
 		err := signal.Validate()
@@ -255,7 +255,7 @@ func TestSignalValidate(t *testing.T) {
 
 		signal := &Signal{
 			Name:           "Speed",
-			StartByte:      0,
+			StartBit:       0,
 			Length:         2,
 			IntegerFigures: 8,
 			DecimalFigures: 8,
@@ -271,7 +271,7 @@ func TestSignalValidate(t *testing.T) {
 
 		signal := &Signal{
 			Name:           "Speed",
-			StartByte:      0,
+			StartBit:       0,
 			Length:         2,
 			IntegerFigures: 4,
 			DecimalFigures: 4,
@@ -287,7 +287,7 @@ func TestSignalValidate(t *testing.T) {
 
 		signal := &Signal{
 			Name:           "Speed",
-			StartByte:      0,
+			StartBit:       0,
 			Length:         2,
 			IntegerFigures: 0,
 			DecimalFigures: 0,

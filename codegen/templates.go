@@ -25,7 +25,7 @@ typedef struct {
 
 typedef struct {
 	char*   name;
-	uint8_t start_byte;
+	uint8_t start_bit;
 	uint8_t dlc;
 	uint8_t endianness;
 	bool    sign;
@@ -124,23 +124,17 @@ vera_err_t vera_decode_can_frame(
 		}
 	}
 
-	if (signal->start_byte >= frame->dlc || signal->start_byte + signal->dlc > frame->dlc) {
+	if (signal->start_bit >= frame->dlc || signal->start_bit + signal->dlc > frame->dlc) {
 		free(res->name);
 		free(res->unit);
 		return vera_err_out_of_bounds;		
 	}
 
-	uint8_t payload[signal->dlc];
-	memcpy(payload, frame->data + signal->start_byte, signal->dlc);
-
-	uint32_t data = 0;
-	for (uint8_t i = 0; i < signal->dlc; i++) {
-		if (signal->endianness == 0) {
-			data |= ((uint32_t)payload[i] << i * 8);
-		} else {
-			data |= ((uint32_t)payload[i] << (signal->dlc-1-i) * 8);
-		}
-	}
+	uint64_t data = _get_payload_by_start_and_length(
+		frame->data,
+		signal->start_bit,
+		signal->dlc
+	);
 
 	if (signal->integer_figures || signal->decimal_figures)
 		res->value = _parse_fixed_point_float(
@@ -160,7 +154,7 @@ vera_err_t vera_decode_can_frame(
 
 	return vera_err_ok;
 }`
-	valueParsingFunctions = `// Needs previous validation
+	utilFunctions = `// Needs previous validation
 float _parse_fixed_point_float(
 	uint32_t value,
 	uint8_t  integer_figures,
@@ -188,6 +182,21 @@ float _parse_float_directly(uint32_t value) {
 	cu.u = value;
 
 	return cu.f;
+}
+
+uint64_t _get_payload_by_start_and_length(uint8_t* payload, uint8_t start, uint8_t length) {
+	uint64_t res = 0LLU;
+
+	for (uint8_t i = start; i < start + length; i++) {
+		uint8_t payload_index = i / 8;
+		uint8_t byte = payload[payload_index];
+		uint8_t shift_right = 7 - (i - start - payload_index * 8);
+		uint8_t shift_left = length + start - 1 - i;
+	
+		res |= ((payload[payload_index] >> shift_right) & 1) << shift_left;
+	}
+
+	return res;
 }
 `
 )

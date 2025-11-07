@@ -31,11 +31,11 @@ func (c *Config) Validate() error {
 }
 
 func (m *Message) Validate() error {
-	if m.Length > 8 {
+	if m.Length > 64 {
 		return ErrorMessageLengthOutOfBounds
 	}
 
-	//TODO(lentscode): check for start bytes out of bounds
+	//TODO(lentscode): check for start bits out of bounds
 	totalLengths := uint8(0)
 
 	for i, s := range m.Signals {
@@ -53,10 +53,10 @@ func (m *Message) Validate() error {
 }
 
 func (s *Signal) Validate() error {
-	if s.StartByte > 8 {
-		return ErrorSignalStartByteOutOfBounds
+	if s.StartBit >= 64 {
+		return ErrorSignalStartBitOutOfBounds
 	}
-	if s.Length > 8 {
+	if s.Length > 64 {
 		return ErrorSignalLengthOutOfBounds
 	}
 	if s.Factor == 0 {
@@ -64,7 +64,7 @@ func (s *Signal) Validate() error {
 	}
 
 	if (s.IntegerFigures > 0 || s.DecimalFigures > 0) &&
-		s.IntegerFigures+s.DecimalFigures != s.Length*8 {
+		s.IntegerFigures+s.DecimalFigures != s.Length {
 		return ErrorSignalFigures
 	}
 

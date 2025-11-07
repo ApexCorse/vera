@@ -45,8 +45,8 @@ func TestParseMessageInstruction(t *testing.T) {
 		a.Len(message.Signals, 2)
 		a.Equal("EngineSpeed", message.Signals[0].Name)
 		a.Equal("OilTemperature", message.Signals[1].Name)
-		a.Equal(uint8(0), message.Signals[0].StartByte)
-		a.Equal(uint8(16), message.Signals[1].StartByte)
+		a.Equal(uint8(0), message.Signals[0].StartBit)
+		a.Equal(uint8(16), message.Signals[1].StartBit)
 		a.Equal(uint8(16), message.Signals[0].Length)
 		a.Equal(uint8(8), message.Signals[1].Length)
 		a.Equal(BigEndian, message.Signals[0].Endianness)
@@ -100,8 +100,8 @@ func TestParseMessageSignals(t *testing.T) {
 
 		a.Equal("EngineSpeed", signals[0].Name)
 		a.Equal("OilTemperature", signals[1].Name)
-		a.Equal(uint8(0), signals[0].StartByte)
-		a.Equal(uint8(16), signals[1].StartByte)
+		a.Equal(uint8(0), signals[0].StartBit)
+		a.Equal(uint8(16), signals[1].StartBit)
 		a.Equal(uint8(16), signals[0].Length)
 		a.Equal(uint8(8), signals[1].Length)
 		a.Equal(BigEndian, signals[0].Endianness)
@@ -137,8 +137,8 @@ func TestParseMessageSignals(t *testing.T) {
 
 		a.Equal("EngineSpeed", signals[0].Name)
 		a.Equal("OilTemperature", signals[1].Name)
-		a.Equal(uint8(0), signals[0].StartByte)
-		a.Equal(uint8(16), signals[1].StartByte)
+		a.Equal(uint8(0), signals[0].StartBit)
+		a.Equal(uint8(16), signals[1].StartBit)
 		a.Equal(uint8(16), signals[0].Length)
 		a.Equal(uint8(8), signals[1].Length)
 		a.Equal(BigEndian, signals[0].Endianness)
@@ -172,7 +172,7 @@ func TestParseMessageSignals(t *testing.T) {
 		a.Len(signals, 1)
 
 		a.Equal("EngineSpeed", signals[0].Name)
-		a.Equal(uint8(0), signals[0].StartByte)
+		a.Equal(uint8(0), signals[0].StartBit)
 		a.Equal(uint8(16), signals[0].Length)
 		a.Equal(BigEndian, signals[0].Endianness)
 		a.False(signals[0].Signed)
@@ -325,26 +325,26 @@ TP_ Speed vehicle/engine/speed`
 	})
 }
 
-func TestParseMessageBytesInfo(t *testing.T) {
-	t.Run("should parse bytes info with little endian", func(t *testing.T) {
+func TestParseMessageBitInfo(t *testing.T) {
+	t.Run("should parse bit info with little endian", func(t *testing.T) {
 		a := assert.New(t)
 
 		signal := &Signal{}
-		err := parseMessageBytesInfo(signal, 0, "0|16@0+")
+		err := parseMessageBitInfo(signal, 0, "0|16@0+")
 		a.Nil(err)
-		a.Equal(uint8(0), signal.StartByte)
+		a.Equal(uint8(0), signal.StartBit)
 		a.Equal(uint8(16), signal.Length)
 		a.Equal(LittleEndian, signal.Endianness)
 		a.False(signal.Signed)
 	})
 
-	t.Run("should parse bytes info with signed signal", func(t *testing.T) {
+	t.Run("should parse bit info with signed signal", func(t *testing.T) {
 		a := assert.New(t)
 
 		signal := &Signal{}
-		err := parseMessageBytesInfo(signal, 0, "0|16@1-")
+		err := parseMessageBitInfo(signal, 0, "0|16@1-")
 		a.Nil(err)
-		a.Equal(uint8(0), signal.StartByte)
+		a.Equal(uint8(0), signal.StartBit)
 		a.Equal(uint8(16), signal.Length)
 		a.Equal(BigEndian, signal.Endianness)
 		a.True(signal.Signed)
@@ -354,34 +354,34 @@ func TestParseMessageBytesInfo(t *testing.T) {
 		a := assert.New(t)
 
 		signal := &Signal{}
-		err := parseMessageBytesInfo(signal, 0, "0|16")
+		err := parseMessageBitInfo(signal, 0, "0|16")
 		a.Error(err)
-		a.Contains(err.Error(), "invalid bytes info")
+		a.Contains(err.Error(), "invalid bit info")
 	})
 
 	t.Run("should return error for invalid pipe separator", func(t *testing.T) {
 		a := assert.New(t)
 
 		signal := &Signal{}
-		err := parseMessageBytesInfo(signal, 0, "016@1+")
+		err := parseMessageBitInfo(signal, 0, "016@1+")
 		a.Error(err)
-		a.Contains(err.Error(), "invalid start byte and length")
+		a.Contains(err.Error(), "invalid start bit and length")
 	})
 
-	t.Run("should return error for invalid start byte", func(t *testing.T) {
+	t.Run("should return error for invalid start bit", func(t *testing.T) {
 		a := assert.New(t)
 
 		signal := &Signal{}
-		err := parseMessageBytesInfo(signal, 0, "abc|16@1+")
+		err := parseMessageBitInfo(signal, 0, "abc|16@1+")
 		a.Error(err)
-		a.Contains(err.Error(), "invalid start byte")
+		a.Contains(err.Error(), "invalid start bit")
 	})
 
 	t.Run("should return error for invalid length", func(t *testing.T) {
 		a := assert.New(t)
 
 		signal := &Signal{}
-		err := parseMessageBytesInfo(signal, 0, "0|abc@1+")
+		err := parseMessageBitInfo(signal, 0, "0|abc@1+")
 		a.Error(err)
 		a.Contains(err.Error(), "invalid length")
 	})
@@ -390,16 +390,16 @@ func TestParseMessageBytesInfo(t *testing.T) {
 		a := assert.New(t)
 
 		signal := &Signal{}
-		err := parseMessageBytesInfo(signal, 0, "0|16@x+")
+		err := parseMessageBitInfo(signal, 0, "0|16@x+")
 		a.Error(err)
-		a.Contains(err.Error(), "invalid byte order")
+		a.Contains(err.Error(), "invalid bit order")
 	})
 
 	t.Run("should return error for invalid signed character", func(t *testing.T) {
 		a := assert.New(t)
 
 		signal := &Signal{}
-		err := parseMessageBytesInfo(signal, 0, "0|16@1x")
+		err := parseMessageBitInfo(signal, 0, "0|16@1x")
 		a.Error(err)
 		a.Contains(err.Error(), "invalid signed")
 	})
@@ -408,16 +408,16 @@ func TestParseMessageBytesInfo(t *testing.T) {
 		a := assert.New(t)
 
 		signal := &Signal{}
-		err := parseMessageBytesInfo(signal, 0, "0|16@1")
+		err := parseMessageBitInfo(signal, 0, "0|16@1")
 		a.Error(err)
-		a.Contains(err.Error(), "invalid byte order and signed")
+		a.Contains(err.Error(), "invalid bit order and signed")
 	})
 
 	t.Run("should return error for invalid decimal format parenthesis", func(t *testing.T) {
 		a := assert.New(t)
 
 		signal := &Signal{}
-		err := parseMessageBytesInfo(signal, 0, "0|16@1+[4,4]")
+		err := parseMessageBitInfo(signal, 0, "0|16@1+[4,4]")
 		a.Error(err)
 		a.Contains(err.Error(), "invalid decimal format")
 	})
@@ -426,7 +426,7 @@ func TestParseMessageBytesInfo(t *testing.T) {
 		a := assert.New(t)
 
 		signal := &Signal{}
-		err := parseMessageBytesInfo(signal, 0, "0|16@1+(4)")
+		err := parseMessageBitInfo(signal, 0, "0|16@1+(4)")
 		a.Error(err)
 		a.Contains(err.Error(), "invalid decimal format")
 	})
@@ -435,7 +435,7 @@ func TestParseMessageBytesInfo(t *testing.T) {
 		a := assert.New(t)
 
 		signal := &Signal{}
-		err := parseMessageBytesInfo(signal, 0, "0|16@1+(a,4)")
+		err := parseMessageBitInfo(signal, 0, "0|16@1+(a,4)")
 		a.Error(err)
 		a.Contains(err.Error(), "invalid decimal format")
 	})
@@ -444,7 +444,7 @@ func TestParseMessageBytesInfo(t *testing.T) {
 		a := assert.New(t)
 
 		signal := &Signal{}
-		err := parseMessageBytesInfo(signal, 0, "0|16@1+(4,b)")
+		err := parseMessageBitInfo(signal, 0, "0|16@1+(4,b)")
 		a.Error(err)
 		a.Contains(err.Error(), "invalid decimal format")
 	})
