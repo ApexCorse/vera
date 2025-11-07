@@ -3,4 +3,5 @@ project(gentest)
 
 add_executable(test test.c vera.c unity/unity.c)
 target_include_directories(test PUBLIC . unity)
+target_link_libraries(test m)
 

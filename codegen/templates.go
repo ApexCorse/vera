@@ -5,6 +5,7 @@ const (
 #define VERA_H
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 #define CAN_MAX_DATA_LEN 8
@@ -74,7 +75,8 @@ vera_err_t vera_decode_can_frame(
 );
 
 #endif // VERA_H`
-	sourceFileIncludes = `#include <strings.h>
+	sourceFileIncludes = `#include <string.h>
+#include <strings.h>
 #include <stdio.h>
 #include <math.h>`
 	decodeMessageFunc = `vera_err_t _decode_message(

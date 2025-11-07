@@ -88,7 +88,7 @@ func TestConfigValidate(t *testing.T) {
 				{
 					ID:          123,
 					Name:        "EngineSpeed",
-					Length:      10, // Invalid: > 8
+					Length:      65, // Invalid: > 64 bits
 					Transmitter: "Engine",
 				},
 			},
@@ -125,13 +125,13 @@ func TestMessageValidate(t *testing.T) {
 		a.Nil(err)
 	})
 
-	t.Run("should return error when message length > 8", func(t *testing.T) {
+	t.Run("should return error when message length > 64", func(t *testing.T) {
 		a := assert.New(t)
 
 		message := &Message{
 			ID:          123,
 			Name:        "EngineSpeed",
-			Length:      9,
+			Length:      65,
 			Transmitter: "Engine",
 		}
 
@@ -208,12 +208,12 @@ func TestSignalValidate(t *testing.T) {
 		a.Nil(err)
 	})
 
-	t.Run("should return error when start bit > 8", func(t *testing.T) {
+	t.Run("should return error when start bit >= 64", func(t *testing.T) {
 		a := assert.New(t)
 
 		signal := &Signal{
 			Name:     "Speed",
-			StartBit: 9,
+			StartBit: 64,
 			Length:   2,
 			Factor:   0.1,
 		}
@@ -222,13 +222,13 @@ func TestSignalValidate(t *testing.T) {
 		a.Equal(ErrorSignalStartBitOutOfBounds, err)
 	})
 
-	t.Run("should return error when length > 8", func(t *testing.T) {
+	t.Run("should return error when length > 64", func(t *testing.T) {
 		a := assert.New(t)
 
 		signal := &Signal{
 			Name:     "Speed",
 			StartBit: 0,
-			Length:   9,
+			Length:   65,
 			Factor:   0.1,
 		}
 
@@ -256,7 +256,7 @@ func TestSignalValidate(t *testing.T) {
 		signal := &Signal{
 			Name:           "Speed",
 			StartBit:       0,
-			Length:         2,
+			Length:         16,
 			IntegerFigures: 8,
 			DecimalFigures: 8,
 			Factor:         0.1,
@@ -266,13 +266,13 @@ func TestSignalValidate(t *testing.T) {
 		a.Nil(err)
 	})
 
-	t.Run("should return error when integer+decimal figures != length*8", func(t *testing.T) {
+	t.Run("should return error when integer+decimal figures != length", func(t *testing.T) {
 		a := assert.New(t)
 
 		signal := &Signal{
 			Name:           "Speed",
 			StartBit:       0,
-			Length:         2,
+			Length:         16,
 			IntegerFigures: 4,
 			DecimalFigures: 4,
 			Factor:         0.1,
