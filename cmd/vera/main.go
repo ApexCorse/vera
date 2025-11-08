@@ -30,7 +30,6 @@ func main() {
 		// can throw
 		autodevkitGeneration(buildPath)
 	case "":
-		break
 	default:
 		fmt.Printf("fatal: sdk '%s' not supported\n", *sdk)
 		os.Exit(1)
@@ -41,6 +40,7 @@ func main() {
 		fmt.Println("fatal: error in opening dbc file: ", err.Error())
 		os.Exit(1)
 	}
+	defer dbcFile.Close()
 
 	config, err := vera.Parse(dbcFile)
 	if err != nil {
@@ -58,11 +58,13 @@ func main() {
 		fmt.Println("fatal: error in creating source file: ", err.Error())
 		os.Exit(1)
 	}
+	defer sourceFile.Close()
 	headerFile, err := os.Create(headerFilePath)
 	if err != nil {
 		fmt.Println("fatal: error in creating header file: ", err.Error())
 		os.Exit(1)
 	}
+	defer headerFile.Close()
 
 	if err = codegen.GenerateHeader(headerFile, config); err != nil {
 		fmt.Println("fatal: error in writing header file: ", err.Error())
@@ -72,7 +74,6 @@ func main() {
 		fmt.Println("fatal: error in writing source file: ", err.Error())
 		os.Exit(1)
 	}
-
 }
 
 func autodevkitGeneration(buildPath string) {
@@ -84,12 +85,14 @@ func autodevkitGeneration(buildPath string) {
 		fmt.Println("fatal: error in creating autodevkit source file: ", err.Error())
 		os.Exit(1)
 	}
+	defer autodevkitSourceFile.Close()
 
 	autodevkitHeaderFile, err := os.Create(autodevkitHeaderFilePath)
 	if err != nil {
 		fmt.Println("fatal: error in creating autodevkit include file: ", err.Error())
 		os.Exit(1)
 	}
+	defer autodevkitHeaderFile.Close()
 
 	if err := autodevkit.GenerateSource(autodevkitSourceFile); err != nil {
 		fmt.Println("fatal: error in writing autodevkit source file: ", err.Error())
@@ -97,7 +100,7 @@ func autodevkitGeneration(buildPath string) {
 	}
 
 	if err := autodevkit.GenerateHeader(autodevkitHeaderFile); err != nil {
-		fmt.Println("fatal: error in writing autodevkit source file: ", err.Error())
+		fmt.Println("fatal: error in writing autodevkit include file: ", err.Error())
 		os.Exit(1)
 	}
 }
