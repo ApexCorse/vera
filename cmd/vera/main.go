@@ -8,6 +8,7 @@ import (
 	"github.com/ApexCorse/vera"
 	"github.com/ApexCorse/vera/codegen"
 	"github.com/ApexCorse/vera/codegen/autodevkit"
+	"github.com/ApexCorse/vera/codegen/stm32hal"
 )
 
 func main() {
@@ -29,6 +30,8 @@ func main() {
 	case "autodevkit":
 		// can throw
 		autodevkitGeneration(buildPath)
+	case "stm32hal":
+		stm32halGeneration(buildPath)
 	case "":
 	default:
 		fmt.Printf("fatal: sdk '%s' not supported\n", *sdk)
@@ -101,6 +104,35 @@ func autodevkitGeneration(buildPath string) {
 
 	if err := autodevkit.GenerateHeader(autodevkitHeaderFile); err != nil {
 		fmt.Println("fatal: error in writing autodevkit include file: ", err.Error())
+		os.Exit(1)
+	}
+}
+
+func stm32halGeneration(buildPath string) {
+	stm32halSourceFilePath := buildPath + "/vera_stm32hal.c"
+	stm32halHeaderFilePath := buildPath + "/vera_stm32hal.h"
+
+	stm32halSourceFile, err := os.Create(stm32halSourceFilePath)
+	if err != nil {
+		fmt.Println("fatal: error in creating stm32hal source file: ", err.Error())
+		os.Exit(1)
+	}
+	defer stm32halSourceFile.Close()
+
+	stm32halHeaderFile, err := os.Create(stm32halHeaderFilePath)
+	if err != nil {
+		fmt.Println("fatal: error in creating stm32hal include file: ", err.Error())
+		os.Exit(1)
+	}
+	defer stm32halHeaderFile.Close()
+
+	if err := stm32hal.GenerateSource(stm32halSourceFile); err != nil {
+		fmt.Println("fatal: error in writing stm32hal source file: ", err.Error())
+		os.Exit(1)
+	}
+
+	if err := stm32hal.GenerateHeader(stm32halHeaderFile); err != nil {
+		fmt.Println("fatal: error in writing stm32hal include file: ", err.Error())
 		os.Exit(1)
 	}
 }
