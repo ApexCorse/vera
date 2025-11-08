@@ -6,4 +6,5 @@
 build
 vera.*
 vera
+vera_*
 coverage.out
