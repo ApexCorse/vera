@@ -2,7 +2,7 @@ package stm32hal
 
 const (
 	headerFile = `#ifndef VERA_STM32HAL_H
-#ifndef VERA_STM32HAL_H
+#define VERA_STM32HAL_H
 
 #include "vera.h"
 #include "stm32f2xx_hal_can.h"
@@ -14,7 +14,7 @@ vera_err_t vera_decode_stm32hal_rx_frame(
 );
 
 #endif // VERA_STM32HAL_H`
-	sourceFile = `#include "vera_smt32hal.h"
+	sourceFile = `#include "vera_stm32hal.h"
 #include <string.h>
 
 vera_err_t vera_decode_stm32hal_rx_frame(
