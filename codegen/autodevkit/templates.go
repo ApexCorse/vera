@@ -20,7 +20,7 @@ vera_err_t vera_parse_autodevkit_rx_frame(CANRxFrame* frame, vera_decoding_resul
 		.is_extended_id = frame->TYPE,
 		.is_fd          = frame->OPERATION == 0x01U ? true : false,
 	};
-	memcpy(vera_frame.data, frame->data8, vera_frame.dlc);
+	memcpy(vera_frame.data, frame->data8, frame->DLC);
 
 	return vera_decode_can_frame(vera_frame, result);
 }`
