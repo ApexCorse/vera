@@ -30,11 +30,31 @@ void test_successful_decoding(void) {
 	TEST_ASSERT_EQUAL_FLOAT(12.875, decoded_signals[1].value);
 }
 
+void test_successful_encoding(void) {
+	vera_can_tx_frame_t frame = {
+		.data = {0}
+	};
+	vera_err_t err = vera_encode_Message1(&frame, 1006985169, 325);
+
+	TEST_ASSERT_EQUAL(vera_err_ok, err);
+	TEST_ASSERT_EQUAL(123, frame.id);
+	TEST_ASSERT_EQUAL(48, frame.dlc);
+	TEST_ASSERT_EQUAL(0x3c, frame.data[0]);
+	TEST_ASSERT_EQUAL(0x05, frame.data[1]);
+	TEST_ASSERT_EQUAL(0x5f, frame.data[2]);
+	TEST_ASSERT_EQUAL(0xd1, frame.data[3]);
+	TEST_ASSERT_EQUAL(0x14, frame.data[4]);
+	TEST_ASSERT_EQUAL(0x50, frame.data[5]);
+	TEST_ASSERT_EQUAL(0x00, frame.data[6]);
+	TEST_ASSERT_EQUAL(0x00, frame.data[7]);
+}
+
 int main(void) {
 	setvbuf(stdout, NULL, _IONBF, 0); // Disable stdout buffering
 	UNITY_BEGIN();
 
 	RUN_TEST(test_successful_decoding);
+	RUN_TEST(test_successful_encoding);
 	return UNITY_END();
 }
 

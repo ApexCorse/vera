@@ -25,6 +25,20 @@ typedef struct {
 } vera_can_rx_frame_t;
 
 typedef struct {
+	uint32_t id;
+	uint8_t  dlc;
+	uint8_t  data[CAN_MAX_DATA_LEN];
+
+	bool is_extended_id;
+	bool is_rtr;
+	bool is_fd;
+	bool bit_rate_switch;
+	bool error_state_indicator;
+
+	uint64_t timestamp;
+} vera_can_tx_frame_t;
+
+typedef struct {
 	char*   name;
 	uint8_t start_bit;
 	uint8_t dlc;
@@ -66,13 +80,16 @@ typedef struct {
 typedef enum {
 	vera_err_ok,
 	vera_err_allocation,
-	vera_err_out_of_bounds
+	vera_err_out_of_bounds,
+	vera_err_null_arg
 } vera_err_t;
 
 vera_err_t vera_decode_can_frame(
 	vera_can_rx_frame_t*   frame,
 	vera_decoding_result_t* result
 );
+
+%s
 
 #endif // VERA_H`
 	sourceFileIncludes = `#include <string.h>
@@ -199,6 +216,16 @@ uint64_t _get_payload_by_start_and_length(uint8_t* payload, uint8_t start, uint8
 	}
 
 	return res;
+}
+
+void _insert_data_in_payload(uint8_t* payload, uint64_t data, uint8_t start, uint8_t length) {
+	for (uint8_t i = start; i < start + length; i++) {
+		uint8_t payload_index = i / 8;
+		uint8_t shift_right = start + length - i - 1;
+		uint8_t shift_left = 7 - (i % 8);
+
+		payload[payload_index] |= ((data >> shift_right) & 1) << (shift_left);
+	}
 }
 `
 )
