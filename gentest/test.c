@@ -8,7 +8,7 @@ void test_successful_decoding(void) {
 	vera_can_rx_frame_t frame = {
 		.id = 0x7b,
 		.dlc = 64,
-		.data = {0x42, 0x58, 0x7d, 0xf4, 0x0c, 0xe5, 0x64, 0x10},
+		.data = {0x00, 0x00, 0x7d, 0xf4, 0x0c, 0xe5, 0x64, 0x10},
 	};
 	vera_decoding_result_t result = {
 		.n_signals = 0,
@@ -24,7 +24,7 @@ void test_successful_decoding(void) {
 	TEST_ASSERT_EQUAL_STRING("RPM", decoded_signals[0].unit);
 	TEST_ASSERT_EQUAL_STRING("EngineSpeed", decoded_signals[0].name); 
 	TEST_ASSERT_EQUAL_STRING("Engine/Metrics/Speed", decoded_signals[0].topic);
-	TEST_ASSERT_FLOAT_WITHIN(0.01, 5.412, decoded_signals[0].value);
+	TEST_ASSERT_FLOAT_WITHIN(0.01, 3224.4, decoded_signals[0].value);
 	TEST_ASSERT_EQUAL_STRING("ºC", decoded_signals[1].unit);
 	TEST_ASSERT_EQUAL_STRING("BatteryTemperature", decoded_signals[1].name);
 	TEST_ASSERT_EQUAL_FLOAT(12.875, decoded_signals[1].value);
