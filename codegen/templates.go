@@ -161,7 +161,7 @@ vera_err_t vera_decode_can_frame(
 			signal->integer_figures,
 			signal->decimal_figures
 		);
-	else res->value = _parse_float_directly(data);
+	else res->value = data;
 
 
 	res->value *= signal->factor;
@@ -190,17 +190,6 @@ float _parse_fixed_point_float(
 	}
 
 	return parsed_value;
-}
-
-float _parse_float_directly(uint32_t value) {
-	typedef union {
-		uint32_t u;
-		float f;
-	} convert_union;
-	convert_union cu;
-	cu.u = value;
-
-	return cu.f;
 }
 
 uint64_t _get_payload_by_start_and_length(uint8_t* payload, uint8_t start, uint8_t length) {
