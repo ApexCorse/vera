@@ -13,6 +13,8 @@ vera_err_t vera_decode_stm32hal_rx_frame(
 	vera_decoding_result_t* result
 );
 
+%s
+
 #endif // VERA_STM32HAL_H`
 	sourceFile = `#include "vera_stm32hal.h"
 #include <string.h>
@@ -31,5 +33,7 @@ vera_err_t vera_decode_stm32hal_rx_frame(
 	memcpy(vera_frame.data, data, frame->DLC);
 
 	return vera_decode_can_frame(vera_frame, result);
-}`
+}
+
+%s`
 )
