@@ -26,18 +26,6 @@ func main() {
 	sourceFilePath := buildPath + "/vera.c"
 	headerFilePath := buildPath + "/vera.h"
 
-	switch *sdk {
-	case "autodevkit":
-		// can throw
-		autodevkitGeneration(buildPath)
-	case "stm32hal":
-		stm32halGeneration(buildPath)
-	case "":
-	default:
-		fmt.Printf("fatal: sdk '%s' not supported\n", *sdk)
-		os.Exit(1)
-	}
-
 	dbcFile, err := os.Open(*dbcFilePath)
 	if err != nil {
 		fmt.Println("fatal: error in opening dbc file: ", err.Error())
@@ -77,9 +65,21 @@ func main() {
 		fmt.Println("fatal: error in writing source file: ", err.Error())
 		os.Exit(1)
 	}
+
+	switch *sdk {
+	case "autodevkit":
+		// can throw
+		autodevkitGeneration(buildPath, config)
+	case "stm32hal":
+		stm32halGeneration(buildPath, config)
+	case "":
+	default:
+		fmt.Printf("fatal: sdk '%s' not supported\n", *sdk)
+		os.Exit(1)
+	}
 }
 
-func autodevkitGeneration(buildPath string) {
+func autodevkitGeneration(buildPath string, config *vera.Config) {
 	autodevkitSourceFilePath := buildPath + "/vera_autodevkit.c"
 	autodevkitHeaderFilePath := buildPath + "/vera_autodevkit.h"
 
@@ -97,18 +97,18 @@ func autodevkitGeneration(buildPath string) {
 	}
 	defer autodevkitHeaderFile.Close()
 
-	if err := autodevkit.GenerateSource(autodevkitSourceFile); err != nil {
+	if err := autodevkit.GenerateSource(autodevkitSourceFile, config); err != nil {
 		fmt.Println("fatal: error in writing autodevkit source file: ", err.Error())
 		os.Exit(1)
 	}
 
-	if err := autodevkit.GenerateHeader(autodevkitHeaderFile); err != nil {
+	if err := autodevkit.GenerateHeader(autodevkitHeaderFile, config); err != nil {
 		fmt.Println("fatal: error in writing autodevkit include file: ", err.Error())
 		os.Exit(1)
 	}
 }
 
-func stm32halGeneration(buildPath string) {
+func stm32halGeneration(buildPath string, config *vera.Config) {
 	stm32halSourceFilePath := buildPath + "/vera_stm32hal.c"
 	stm32halHeaderFilePath := buildPath + "/vera_stm32hal.h"
 
@@ -126,12 +126,12 @@ func stm32halGeneration(buildPath string) {
 	}
 	defer stm32halHeaderFile.Close()
 
-	if err := stm32hal.GenerateSource(stm32halSourceFile); err != nil {
+	if err := stm32hal.GenerateSource(stm32halSourceFile, config); err != nil {
 		fmt.Println("fatal: error in writing stm32hal source file: ", err.Error())
 		os.Exit(1)
 	}
 
-	if err := stm32hal.GenerateHeader(stm32halHeaderFile); err != nil {
+	if err := stm32hal.GenerateHeader(stm32halHeaderFile, config); err != nil {
 		fmt.Println("fatal: error in writing stm32hal include file: ", err.Error())
 		os.Exit(1)
 	}
