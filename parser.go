@@ -39,7 +39,6 @@ func Parse(r io.Reader) (*Config, error) {
 				line := strings.TrimFunc(lines[j], func(r rune) bool {
 					return r == ' ' || r == '\t'
 				})
-				fmt.Println(line)
 				if !strings.HasPrefix(line, "SG_") {
 					i = j - 1
 					break
