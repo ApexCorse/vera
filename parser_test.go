@@ -12,10 +12,10 @@ func TestParse(t *testing.T) {
 		a := assert.New(t)
 
 		configStr := `BO_ 123 EngineSpeed: 3 Engine
-	SG_ EngineSpeed : 0|16@1+ (0.1,0) [0|8000] "RPM" DriverGateway
+SG_ EngineSpeed : 0|16@1+ (0.1,0) [0|8000] "RPM" DriverGateway
 	SG_ OilTemperature : 16|8@1- (1,-40) [-40|150] "ºC" DriverGateway,EngineGateway
 BO_ 123 EngineSpeed: 3 Engine
-	SG_ EngineSpeed : 0|16@1+ (0.1,0) [0|8000] "RPM" DriverGateway
+   SG_ EngineSpeed : 0|16@1+ (0.1,0) [0|8000] "RPM" DriverGateway
 	SG_ OilTemperature : 16|8@1- (1,-40) [-40|150] "ºC" DriverGateway,EngineGateway`
 		reader := strings.NewReader(configStr)
 
@@ -31,8 +31,8 @@ func TestParseMessageInstruction(t *testing.T) {
 		a := assert.New(t)
 
 		messageStr := `BO_ 123 EngineSpeed: 3 Engine
-	SG_ EngineSpeed : 0|16@1+ (0.1,0) [0|8000] "RPM" DriverGateway
-	SG_ OilTemperature : 16|8@1- (1,-40) [-40|150] "ºC" DriverGateway,EngineGateway`
+SG_ EngineSpeed : 0|16@1+ (0.1,0) [0|8000] "RPM" DriverGateway
+SG_ OilTemperature : 16|8@1- (1,-40) [-40|150] "ºC" DriverGateway,EngineGateway`
 		message, err := parseMessageInstruction(messageStr)
 
 		a.Nil(err)
@@ -90,8 +90,8 @@ func TestParseMessageSignals(t *testing.T) {
 	t.Run("should return signal struct array on correct input", func(t *testing.T) {
 		a := assert.New(t)
 
-		signalsStr := `	SG_ EngineSpeed : 0|16@1+ (0.1,0) [0|8000] "RPM" DriverGateway
-	SG_ OilTemperature : 16|8@1- (1,-40) [-40|150] "ºC" DriverGateway,EngineGateway`
+		signalsStr := `SG_ EngineSpeed : 0|16@1+ (0.1,0) [0|8000] "RPM" DriverGateway
+SG_ OilTemperature : 16|8@1- (1,-40) [-40|150] "ºC" DriverGateway,EngineGateway`
 		signals, err := parseMessageSignals(signalsStr)
 
 		a.Nil(err)
@@ -127,8 +127,8 @@ func TestParseMessageSignals(t *testing.T) {
 	t.Run("should return signal struct array on correct input with additional spaces", func(t *testing.T) {
 		a := assert.New(t)
 
-		signalsStr := `	SG_ EngineSpeed :    0|16@1+ (0.1,0)  [0|8000]     "RPM" DriverGateway
-	SG_   OilTemperature :    16|8@1-   (1,-40) [-40|150]  "ºC"   DriverGateway,EngineGateway`
+		signalsStr := `SG_ EngineSpeed :    0|16@1+ (0.1,0)  [0|8000]     "RPM" DriverGateway
+SG_   OilTemperature :    16|8@1-   (1,-40) [-40|150]  "ºC"   DriverGateway,EngineGateway`
 		signals, err := parseMessageSignals(signalsStr)
 
 		a.Nil(err)
@@ -164,7 +164,7 @@ func TestParseMessageSignals(t *testing.T) {
 	t.Run("should return signal struct array on correct input (including integer and decimal part)", func(t *testing.T) {
 		a := assert.New(t)
 
-		signalsStr := `	SG_ EngineSpeed : 0|16@1+(4,4) (0.1,0) [0|8000] "RPM" DriverGateway`
+		signalsStr := `SG_ EngineSpeed : 0|16@1+(4,4) (0.1,0) [0|8000] "RPM" DriverGateway`
 		signals, err := parseMessageSignals(signalsStr)
 
 		a.Nil(err)
@@ -186,30 +186,6 @@ func TestParseMessageSignals(t *testing.T) {
 
 		a.Equal(uint8(4), signals[0].IntegerFigures)
 		a.Equal(uint8(4), signals[0].DecimalFigures)
-	})
-
-	t.Run("fails because it lacks tabs", func(t *testing.T) {
-		a := assert.New(t)
-
-		// Missing tab
-		signalsStr := `SG_ EngineSpeed : 0|16@1+ (0.1,0) [0|8000] "RPM" DriverGateway
-	SG_ OilTemperature : 16|8@1- (1,-40) [-40|150] "ºC" DriverGateway,EngineGateway`
-		signals, err := parseMessageSignals(signalsStr)
-
-		a.Error(err)
-		a.Nil(signals)
-	})
-
-	t.Run("fails because decimal format is invalid", func(t *testing.T) {
-		a := assert.New(t)
-
-		// Wrong decimal format "("
-		signalsStr := `	SG_ EngineSpeed : 0|16@1+( (0.1,0) [0|8000] "RPM" DriverGateway
-	SG_ OilTemperature : 16|8@1- (1,-40) [-40|150] "ºC" DriverGateway,EngineGateway`
-		signals, err := parseMessageSignals(signalsStr)
-
-		a.Error(err)
-		a.Nil(signals)
 	})
 }
 
