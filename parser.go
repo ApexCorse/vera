@@ -36,12 +36,16 @@ func Parse(r io.Reader) (*Config, error) {
 			messageInstruction := lines[i]
 
 			for j := i + 1; j < len(lines); j++ {
-				if !strings.HasPrefix(lines[j], "\tSG_") {
+				line := strings.TrimFunc(lines[j], func(r rune) bool {
+					return r == ' ' || r == '\t'
+				})
+				fmt.Println(line)
+				if !strings.HasPrefix(line, "SG_") {
 					i = j - 1
 					break
 				}
 
-				messageInstruction += "\n" + lines[j]
+				messageInstruction += "\n" + line
 			}
 
 			messageConfig, err := parseMessageInstruction(messageInstruction)
@@ -156,10 +160,9 @@ func parseMessageSignals(messageSignals string) ([]Signal, error) {
 	}
 
 	for i, line := range signalsLines {
-		if !strings.HasPrefix(line, "\tSG_") {
-			return nil, fmt.Errorf("signal line %d is not indented or doesn't start with 'SG_'", i)
+		if !strings.HasPrefix(line, "SG_") {
+			return nil, fmt.Errorf("signal line %d doesn't start with 'SG_'", i)
 		}
-		line = strings.TrimPrefix(line, "\t")
 
 		lineParts := strings.Fields(line)
 		if len(lineParts) < 7 {
