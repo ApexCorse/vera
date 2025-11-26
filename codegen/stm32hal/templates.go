@@ -26,7 +26,7 @@ vera_err_t vera_decode_stm32hal_rx_frame(
 ) {
 	vera_can_rx_frame_t vera_frame = {
 		.id             = frame->IDE == CAN_ID_EXT ? frame->ExtId : frame->StdId,
-		.dlc            = frame->DLC * 8,
+		.dlc            = frame->DLC,
 		.is_extended_id = frame->IDE == CAN_ID_EXT ? true : false,
 		.timestamp      = frame->Timestamp
 	};

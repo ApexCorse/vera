@@ -18,7 +18,7 @@ vera_err_t vera_decode_autodevkit_rx_frame(CANRxFrame* frame, vera_decoding_resu
 vera_err_t vera_decode_autodevkit_rx_frame(CANRxFrame* frame, vera_decoding_result_t* result) {
 	vera_can_rx_frame_t vera_frame = {
 		.id             = frame->ID,
-		.dlc            = frame->DLC * 8,
+		.dlc            = frame->DLC,
 		.is_extended_id = frame->TYPE,
 		.is_fd          = frame->OPERATION == 0x01U ? true : false
 	};

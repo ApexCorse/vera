@@ -15,7 +15,7 @@ func TestConfigValidate(t *testing.T) {
 				{
 					ID:          123,
 					Name:        "EngineSpeed",
-					Length:      8,
+					DLC:         1,
 					Transmitter: "Engine",
 					Signals: []Signal{
 						{
@@ -88,7 +88,7 @@ func TestConfigValidate(t *testing.T) {
 				{
 					ID:          123,
 					Name:        "EngineSpeed",
-					Length:      65, // Invalid: > 64 bits
+					DLC:         9, // Invalid: > 8 bytes
 					Transmitter: "Engine",
 				},
 			},
@@ -101,13 +101,13 @@ func TestConfigValidate(t *testing.T) {
 }
 
 func TestMessageValidate(t *testing.T) {
-	t.Run("should validate message with valid length", func(t *testing.T) {
+	t.Run("should validate message with valid DLC", func(t *testing.T) {
 		a := assert.New(t)
 
 		message := &Message{
 			ID:          123,
 			Name:        "EngineSpeed",
-			Length:      8,
+			DLC:         1,
 			Transmitter: "Engine",
 			Signals: []Signal{
 				{
@@ -125,46 +125,46 @@ func TestMessageValidate(t *testing.T) {
 		a.Nil(err)
 	})
 
-	t.Run("should return error when message length > 64", func(t *testing.T) {
+	t.Run("should return error when message DLC > 8", func(t *testing.T) {
 		a := assert.New(t)
 
 		message := &Message{
 			ID:          123,
 			Name:        "EngineSpeed",
-			Length:      65,
+			DLC:         9,
 			Transmitter: "Engine",
 		}
 
 		err := message.Validate()
-		a.Equal(ErrorMessageLengthOutOfBounds, err)
+		a.Equal(ErrorMessageDLCOutOfBounds, err)
 	})
 
-	t.Run("should return error when signal lengths exceed message length", func(t *testing.T) {
+	t.Run("should return error when signal lengths exceed message DLC", func(t *testing.T) {
 		a := assert.New(t)
 
 		message := &Message{
 			ID:          123,
 			Name:        "EngineSpeed",
-			Length:      4,
+			DLC:         1,
 			Transmitter: "Engine",
 			Signals: []Signal{
 				{
 					Name:     "Speed",
 					StartBit: 0,
-					Length:   3,
+					Length:   5,
 					Factor:   0.1,
 				},
 				{
 					Name:     "Temp",
-					StartBit: 3,
-					Length:   3,
+					StartBit: 5,
+					Length:   5,
 					Factor:   1.0,
 				},
 			},
 		}
 
 		err := message.Validate()
-		a.Equal(ErrorSignalLengthsGreaterThanMessageLegnth, err)
+		a.Equal(ErrorSignalLengthsGreaterThanMessageDLC, err)
 	})
 
 	t.Run("should return error for invalid signal", func(t *testing.T) {
@@ -173,7 +173,7 @@ func TestMessageValidate(t *testing.T) {
 		message := &Message{
 			ID:          123,
 			Name:        "EngineSpeed",
-			Length:      8,
+			DLC:         1,
 			Transmitter: "Engine",
 			Signals: []Signal{
 				{

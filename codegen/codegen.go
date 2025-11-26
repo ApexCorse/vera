@@ -45,7 +45,7 @@ func GenerateSource(w io.Writer, config *vera.Config, headerFile string) error {
 			};`,
 			m.ID,
 			m.Name,
-			m.Length,
+			m.DLC,
 			len(m.Signals),
 		))
 
@@ -155,7 +155,7 @@ func generateEncodingFunctionsDefinitions(config *vera.Config) string {
 
 		s += "\tmemset(frame->data, 0, sizeof(uint8_t)*8);\n"
 		s += "\tframe->id = " + fmt.Sprintf("0x%X", message.ID) + ";\n"
-		s += "\tframe->dlc = " + fmt.Sprintf("%d", message.Length) + ";\n"
+		s += "\tframe->dlc = " + fmt.Sprintf("%d", message.DLC) + ";\n"
 
 		if len(message.Signals) > 0 {
 			s += "\n"
