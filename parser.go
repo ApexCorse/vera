@@ -121,7 +121,7 @@ func parseMessageDefinition(messageDefinition string) (*Message, error) {
 	message := &Message{
 		ID:          messageID,
 		Name:        messageName,
-		Length:      uint8(dlc),
+		DLC:         uint8(dlc),
 		Transmitter: Node(transmitter),
 	}
 

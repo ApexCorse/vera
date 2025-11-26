@@ -3,7 +3,6 @@ package autodevkit
 import (
 	"fmt"
 	"io"
-	"math"
 
 	"github.com/ApexCorse/vera"
 )
@@ -65,7 +64,7 @@ func generateEncodingFunctionsDefinitions(config *vera.Config) string {
 
 		s += "\tmemset(frame->data, 0, sizeof(uint8_t)*8);\n"
 		s += "\tframe->ID = " + fmt.Sprintf("0x%X", message.ID) + ";\n"
-		s += "\tframe->DLC = " + fmt.Sprintf("%.0f", math.Ceil(float64(message.Length)/8)) + ";\n"
+		s += "\tframe->DLC = " + fmt.Sprintf("%d", message.DLC) + ";\n"
 
 		if len(message.Signals) > 0 {
 			s += "\n"

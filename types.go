@@ -8,7 +8,7 @@ type Config struct {
 type Message struct {
 	Name        string
 	ID          uint32
-	Length      uint8
+	DLC         uint8
 	Transmitter Node
 	Signals     []Signal
 }

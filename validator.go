@@ -31,8 +31,8 @@ func (c *Config) Validate() error {
 }
 
 func (m *Message) Validate() error {
-	if m.Length > 64 {
-		return ErrorMessageLengthOutOfBounds
+	if m.DLC > 8 {
+		return ErrorMessageDLCOutOfBounds
 	}
 
 	//TODO(lentscode): check for start bits out of bounds
@@ -45,8 +45,8 @@ func (m *Message) Validate() error {
 
 		totalLengths += s.Length
 	}
-	if totalLengths > m.Length {
-		return ErrorSignalLengthsGreaterThanMessageLegnth
+	if totalLengths > m.DLC*8 {
+		return ErrorSignalLengthsGreaterThanMessageDLC
 	}
 
 	return nil
