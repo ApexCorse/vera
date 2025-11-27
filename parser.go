@@ -197,7 +197,9 @@ SG_ <SignalName> : <StartBit>|<Length>@<BitOrder><Signed> (<Factor>,<Offset>) [<
 			return nil, err
 		}
 
-		parseMessageReceivers(&signal, lineParts[7])
+		if len(lineParts) > 7 {
+			parseMessageReceivers(&signal, lineParts[7])
+		}
 
 		signalsSlice[i] = signal
 	}
