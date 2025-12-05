@@ -62,7 +62,7 @@ func generateEncodingFunctionsDefinitions(config *vera.Config) string {
 		s += ") {\n"
 		s += "\tif (!frame) return vera_err_null_arg;\n\n"
 
-		s += "\tmemset(frame->data, 0, sizeof(uint8_t)*8);\n"
+		s += "\tmemset(frame->data8, 0, sizeof(uint8_t)*8);\n"
 		s += "\tframe->ID = " + fmt.Sprintf("0x%X", message.ID) + ";\n"
 		s += "\tframe->DLC = " + fmt.Sprintf("%d", message.DLC) + ";\n"
 
@@ -71,7 +71,7 @@ func generateEncodingFunctionsDefinitions(config *vera.Config) string {
 		}
 		for _, signal := range message.Signals {
 			s += fmt.Sprintf(
-				"\t_insert_data_in_payload(frame->data, %s, %d, %d);\n",
+				"\t_insert_data_in_payload(frame->data8, %s, %d, %d);\n",
 				signal.Name,
 				signal.StartBit,
 				signal.Length,

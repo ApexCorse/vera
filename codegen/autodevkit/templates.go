@@ -24,7 +24,7 @@ vera_err_t vera_decode_autodevkit_rx_frame(CANRxFrame* frame, vera_decoding_resu
 	};
 	memcpy(vera_frame.data, frame->data8, frame->DLC);
 
-	return vera_decode_can_frame(vera_frame, result);
+	return vera_decode_can_frame(&vera_frame, result);
 }
 
 %s`
