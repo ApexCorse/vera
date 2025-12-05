@@ -9,7 +9,11 @@ import (
 )
 
 func GenerateHeader(w io.Writer, config *vera.Config) error {
-	s := fmt.Sprintf(includeFile, generateEncodingFunctionsDeclarations(config))
+	s := fmt.Sprintf(
+		includeFile,
+		generateHelperFunctionsDeclarations(config),
+		generateEncodingFunctionsDeclarations(config),
+	)
 	if _, err := w.Write([]byte(s)); err != nil {
 		return err
 	}
@@ -50,10 +54,10 @@ func GenerateSource(w io.Writer, config *vera.Config, headerFile string) error {
 		))
 
 		sb.WriteString(fmt.Sprintf(`
-			message.signals = (vera_signal_t*)malloc(sizeof(vera_signal_t)*%d);`, len(m.Signals)))
+			vera_signal_t signals[%d];`, len(m.Signals)))
 		for i, s := range m.Signals {
 			sb.WriteString(fmt.Sprintf(`
-			message.signals[%d] = (vera_signal_t){
+			signals[%d] = (vera_signal_t){
 				.name = "%s",
 				.unit = "%s",
 				.start_bit = %d,
@@ -89,10 +93,10 @@ func GenerateSource(w io.Writer, config *vera.Config, headerFile string) error {
 			vera_err_t err = _decode_message(
 				frame,
 				&message,
+				signals,
 				result
 			);
 			if (err != vera_err_ok) {
-				free(message.signals);
 				return err;
 			}
 			break;
@@ -101,7 +105,14 @@ func GenerateSource(w io.Writer, config *vera.Config, headerFile string) error {
 	sb.WriteString("\n\t}")
 	sb.WriteString("\n\treturn vera_err_ok;")
 
-	sb.WriteString("\n}\n")
+	sb.WriteString("\n}\n\n")
+
+	for _, m := range config.Messages {
+		sb.WriteString(fmt.Sprintf(`int vera_get_n_signals_%s() {
+	return %d;
+}`, m.Name, len(m.Signals)))
+		sb.WriteString("\n")
+	}
 
 	encodingFunctionsDefinitions := generateEncodingFunctionsDefinitions(config)
 	if encodingFunctionsDefinitions != "" {
@@ -113,6 +124,18 @@ func GenerateSource(w io.Writer, config *vera.Config, headerFile string) error {
 		return err
 	}
 	return nil
+}
+
+func generateHelperFunctionsDeclarations(config *vera.Config) string {
+	s := ""
+	for i, m := range config.Messages {
+		s += "int vera_get_n_signals_" + m.Name + "();"
+		if i < len(config.Messages)-1 {
+			s += "\n\n"
+		}
+	}
+
+	return s
 }
 
 func generateEncodingFunctionsDeclarations(config *vera.Config) string {

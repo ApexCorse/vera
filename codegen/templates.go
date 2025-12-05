@@ -6,7 +6,6 @@ const (
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdlib.h>
 
 #define CAN_MAX_DATA_LEN 8
 
@@ -39,7 +38,7 @@ typedef struct {
 } vera_can_tx_frame_t;
 
 typedef struct {
-	char*   name;
+	char    name[32];
 	uint8_t start_bit;
 	uint8_t dlc;
 	uint8_t endianness;
@@ -50,14 +49,14 @@ typedef struct {
 	float   offset;
 	float   min;
 	float   max;
-	char*   unit;
+	char    unit[32];
 	char**  receivers;
-	char*   topic;
+	char    topic[32];
 } vera_signal_t;
 
 typedef struct {
 	uint32_t       id;
-	char*          name;
+	char           name[32];
 	uint8_t        dlc;
 	char*          transmitter;
 	vera_signal_t* signals;
@@ -65,11 +64,11 @@ typedef struct {
 } vera_message_t;
 
 typedef struct {
-	char*    name;
-	char*    unit;
+	char     name[32];
+	char     unit[32];
 	float    value;
 	uint64_t timestamp;
-	char*    topic;
+	char     topic[32];
 } vera_decoded_signal_t;
 
 typedef struct {
@@ -91,6 +90,8 @@ vera_err_t vera_decode_can_frame(
 
 %s
 
+%s
+
 #endif // VERA_H`
 	sourceFileIncludes = `#include <string.h>
 #include <strings.h>
@@ -99,20 +100,18 @@ vera_err_t vera_decode_can_frame(
 	decodeMessageFunc = `vera_err_t _decode_message(
 	vera_can_rx_frame_t*    frame,
 	vera_message_t*         message,
+	vera_signal_t*          signals,
 	vera_decoding_result_t* result
 ) {
-	result->decoded_signals = (vera_decoded_signal_t*)malloc(sizeof(vera_decoded_signal_t)*message->n_signals);
-	if (!result->decoded_signals) return vera_err_allocation;
+	if (!result->decoded_signals) return vera_err_null_arg;
 
 	for (uint8_t i = 0; i < message->n_signals; i++) {
 		vera_err_t err = _decode_signal(
 			frame,
-			message->signals + i,
+			signals + i,
 			result->decoded_signals + i
 		);
 		if (err != vera_err_ok) {
-			free(result->decoded_signals);
-			result->decoded_signals = NULL;
 			return err;
 		}
 		result->n_signals++;
@@ -125,27 +124,11 @@ vera_err_t vera_decode_can_frame(
 	vera_signal_t*         signal,
 	vera_decoded_signal_t* res
 ) {
-	res->name = strdup(signal->name);
-	if (!res->name) return vera_err_allocation;
+	strcpy(res->name, signal->name);
+	strcpy(res->unit, signal->unit);
+	strcpy(res->topic, signal->topic);
 
-	res->unit = strdup(signal->unit);
-	if (!res->unit) {
-		free(res->name);
-		return vera_err_allocation;
-	}
-
-	if (strlen(signal->topic) > 0) {
-		res->topic = strdup(signal->topic);
-		if (!res->topic) {
-			free(res->name);
-			free(res->unit);
-			return vera_err_allocation;
-		}
-	}
-
-	if (signal->start_bit >= frame->dlc || signal->start_bit + signal->dlc > frame->dlc) {
-		free(res->name);
-		free(res->unit);
+	if (signal->start_bit >= frame->dlc * 8 || signal->start_bit + signal->dlc > frame->dlc * 8) {
 		return vera_err_out_of_bounds;		
 	}
 
