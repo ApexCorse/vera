@@ -7,12 +7,13 @@ void tearDown(void) {}
 void test_successful_decoding(void) {
 	vera_can_rx_frame_t frame = {
 		.id = 0x7b,
-		.dlc = 64,
+		.dlc = 8,
 		.data = {0x00, 0x00, 0x7d, 0xf4, 0x0c, 0xe5, 0x64, 0x10},
 	};
+	vera_decoded_signal_t signals[vera_get_n_signals_Message1()];
 	vera_decoding_result_t result = {
 		.n_signals = 0,
-		.decoded_signals = NULL
+		.decoded_signals = signals
 	};
 
 	vera_err_t err = vera_decode_can_frame(&frame, &result);
@@ -38,7 +39,7 @@ void test_successful_encoding(void) {
 
 	TEST_ASSERT_EQUAL(vera_err_ok, err);
 	TEST_ASSERT_EQUAL(123, frame.id);
-	TEST_ASSERT_EQUAL(48, frame.dlc);
+	TEST_ASSERT_EQUAL(6, frame.dlc);
 	TEST_ASSERT_EQUAL(0x3c, frame.data[0]);
 	TEST_ASSERT_EQUAL(0x05, frame.data[1]);
 	TEST_ASSERT_EQUAL(0x5f, frame.data[2]);
