@@ -176,15 +176,15 @@ float _parse_fixed_point_float(
 }
 
 uint64_t _get_payload_by_start_and_length(uint8_t* payload, uint8_t start, uint8_t length) {
-	uint64_t res = 0LLU;
+	uint64_t res = 0ULL;
 
-	for (uint8_t i = start; i < start + length; i++) {
-		uint8_t payload_index = i / 8;
-		uint8_t byte = payload[payload_index];
-		uint8_t shift_right = 7 - (i - start - payload_index * 8);
-		uint8_t shift_left = length + start - 1 - i;
-	
-		res |= ((payload[payload_index] >> shift_right) & 1) << shift_left;
+	for (uint8_t i = 0; i < length; i++) {
+		uint8_t current_bit_index = start + i;
+		uint8_t byte_index = current_bit_index / 8;
+		uint8_t bit_offset_in_byte = current_bit_index % 8;
+		uint8_t bit = (payload[byte_index] >> (7 - bit_offset_in_byte)) & 1;
+		
+		res |= (uint64_t)bit << (length - 1 - i);
 	}
 
 	return res;
