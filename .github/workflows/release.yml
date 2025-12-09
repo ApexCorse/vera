@@ -45,6 +45,7 @@ jobs:
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
+          VERA_VERSION: ${{ github.ref_name }}
         run: |
           go build -v -o ${{ matrix.output }} ./cmd/vera
 

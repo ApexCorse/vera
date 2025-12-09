@@ -12,10 +12,17 @@ import (
 )
 
 func main() {
+	version := os.Getenv("VERA_VERSION")
 	dbcFilePath := flag.String("f", "config.dbc", "DBC file relative path")
 	sdk := flag.String("sdk", "", "SDK to generate the adapters for")
+	versionOpt := flag.Bool("v", false, "The current version")
 
 	flag.Parse()
+
+	if *versionOpt {
+		fmt.Println(version)
+		return
+	}
 
 	args := flag.Args()
 	if len(args) < 1 {
