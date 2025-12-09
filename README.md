@@ -2,9 +2,9 @@
 
 A lightweight DBC file parser and C code generator for CAN bus message decoding.
 
-## Overview
+Vera is mainly a code generation tool that parses DBC (Database Container) files and generates C source code for decoding CAN (Controller Area Network) bus messages. It simplifies the process of implementing CAN message decoders in embedded systems by automating the conversion of message definitions into efficient C code.
 
-Vera is a code generation tool that parses DBC (Database Container) files and generates C source code for decoding CAN (Controller Area Network) bus messages. It simplifies the process of implementing CAN message decoders in embedded systems by automating the conversion of message definitions into efficient C code.
+It can also be used as a package for parsing DBC files (although very feature-limited).
 
 ## Features
 
@@ -18,6 +18,10 @@ Vera is a code generation tool that parses DBC (Database Container) files and ge
   - Scaling factors and offsets
   - Min/max validation
   - Units
+- **Support for embedded SDKs**: ESP-IDF, STM32 HAL, AutoDevKit
+
+> [!WARNING]
+> The ESP-IDF integration is not currently available
 
 ## Installation
 
@@ -28,10 +32,13 @@ Vera is a code generation tool that parses DBC (Database Container) files and ge
 ### Install
 
 ```bash
+# Install from source
 git clone https://github.com/ApexCorse/vera.git
 cd vera
 go install github.com/ApexCorse/vera/cmd/vera
 ```
+
+You can also find the standalone binaries [here](https://github.com/ApexCorse/vera/releases/).
 
 ## Usage
 
@@ -42,6 +49,7 @@ vera [options] <build_path>
 ### Options
 
 - `-f <file>`: Path to the DBC file (default: `config.dbc`)
+- `-sdk <sdk>`: The SDK to generate specific code for (`esp-idf`, `stm32hal`, `autodevkit`)
 
 ### Arguments
 
@@ -58,6 +66,18 @@ vera -f network.dbc ./output
 # - output/vera.c (source file with decoding functions)
 ```
 
+```bash
+# SDK integration
+vera -f network.dbc -sdk autodevkit ./output
+
+# This creates:
+# - output/vera.h (header file with type definitions)
+# - output/vera.c (source file with decoding functions)
+# - output/vera_autodevkit.h (header file AutoDevKit specific)
+# - output/vera_autodevkit.c (source file AutoDevKit specific)
+```
+
+
 ## DBC File Format
 
 Vera expects DBC files with the following format:
@@ -68,18 +88,19 @@ BO_ <message_id> <message_name>: <dlc> <transmitter>
 TP_ <signal_name> <mqtt_topic>
 ```
 
-> **Note**: DLC (Data Length Code), Start Bit, and Length are all expressed in **bits**.
+> [!NOTE]
+> Start Bit, and Length are all expressed in **bits**, while DLC is expressed in **bytes**.
 
-> **Note**: Receivers are currently parsed but not used in code generation.
+> [!NOTE]
+> Receivers are currently parsed but not used in code generation.
 
-> **Note**: The `(<integer_figures>,<decimal_figures>)` parameter is optional and specifies the fixed number of digits for both integer and decimal parts of the signal value when displayed. If omitted, no specific formatting is enforced.
-
-> **Note**: The `TP_` instruction is used to associate an MQTT topic with a specific signal (referenced by `<signal_name>`). It is placed at the same level as `BO_` instructions, not indented under them.
+> [!NOTE]
+> The `TP_` instruction is used to associate an MQTT topic with a specific signal (referenced by `<signal_name>`). It is placed at the same level as `BO_` instructions, not indented under them.
 
 ### Example DBC File
 
 ```
-BO_ 123 EngineSpeed: 48 Engine
+BO_ 123 EngineSpeed: 6 Engine
     SG_ EngineSpeed : 0|32@1+ (0.1,0) [0|8000] "RPM" DriverGateway
     SG_ BatteryTemperature : 32|16@1+(12,4) (1,0) [0|8000] "ºC" DriverGateway
 TP_ EngineSpeed vehicle/engine/speed
