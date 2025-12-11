@@ -132,20 +132,11 @@ vera_err_t vera_decode_can_frame(
 		return vera_err_out_of_bounds;		
 	}
 
-	uint64_t data = _get_payload_by_start_and_length(
+	res->value = _get_payload_by_start_and_length(
 		frame->data,
 		signal->start_bit,
 		signal->dlc
 	);
-
-	if (signal->integer_figures || signal->decimal_figures)
-		res->value = _parse_fixed_point_float(
-			data,
-			signal->integer_figures,
-			signal->decimal_figures
-		);
-	else res->value = data;
-
 
 	res->value *= signal->factor;
 	res->value += signal->offset;
@@ -156,26 +147,7 @@ vera_err_t vera_decode_can_frame(
 
 	return vera_err_ok;
 }`
-	utilFunctions = `// Needs previous validation
-float _parse_fixed_point_float(
-	uint32_t value,
-	uint8_t  integer_figures,
-	uint8_t  decimal_figures
-) {
-	float parsed_value = 0.0;
-
-	for (int i = 0; i < decimal_figures; i++) {
-		parsed_value += ((value >> i) & 1) * pow(2, (float)(i - decimal_figures));
-	}
-
-	for (int i = 0; i < integer_figures; i++) {
-		parsed_value += ((value >> (decimal_figures + i)) & 1) * pow(2, (float)i);
-	}
-
-	return parsed_value;
-}
-
-uint64_t _get_payload_by_start_and_length(uint8_t* payload, uint8_t start, uint8_t length) {
+	utilFunctions = `uint64_t _get_payload_by_start_and_length(uint8_t* payload, uint8_t start, uint8_t length) {
 	uint64_t res = 0ULL;
 
 	for (uint8_t i = 0; i < length; i++) {

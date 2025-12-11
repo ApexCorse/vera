@@ -254,32 +254,6 @@ func parseMessageBitInfo(signal *Signal, i int, signalBitInfo string) error {
 		return nil
 	}
 
-	signalDecimalFormat := signalOtherInfo[2:]
-	if signalDecimalFormat[0] != '(' || signalDecimalFormat[len(signalDecimalFormat)-1] != ')' {
-		return fmt.Errorf("signal line %d has invalid decimal format: %s", i, signalDecimalFormat)
-	}
-
-	signalDecimalFormat = strings.TrimPrefix(strings.TrimSuffix(signalDecimalFormat, ")"), "(")
-	signalDecimalFormatParts := strings.Split(signalDecimalFormat, ",")
-	if len(signalDecimalFormatParts) != 2 {
-		return fmt.Errorf("signal line %d has invalid decimal format: %s", i, signalDecimalFormat)
-	}
-
-	integerFiguresStr := signalDecimalFormatParts[0]
-	decimalFiguresStr := signalDecimalFormatParts[1]
-
-	integerFigures, err := strconv.Atoi(integerFiguresStr)
-	if err != nil {
-		return fmt.Errorf("signal line %d has invalid decimal format: %s", i, signalDecimalFormat)
-	}
-	decimalFigures, err := strconv.Atoi(decimalFiguresStr)
-	if err != nil {
-		return fmt.Errorf("signal line %d has invalid decimal format: %s", i, signalDecimalFormat)
-	}
-
-	signal.IntegerFigures = uint8(integerFigures)
-	signal.DecimalFigures = uint8(decimalFigures)
-
 	return nil
 }
 

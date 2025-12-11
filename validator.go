@@ -63,11 +63,6 @@ func (s *Signal) Validate() error {
 		return ErrorSignalFactorIsZero
 	}
 
-	if (s.IntegerFigures > 0 || s.DecimalFigures > 0) &&
-		s.IntegerFigures+s.DecimalFigures != s.Length {
-		return ErrorSignalFigures
-	}
-
 	return nil
 }
 
