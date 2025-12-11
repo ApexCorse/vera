@@ -28,7 +28,7 @@ void test_successful_decoding(void) {
 	TEST_ASSERT_FLOAT_WITHIN(0.01, 3224.4, decoded_signals[0].value);
 	TEST_ASSERT_EQUAL_STRING("ºC", decoded_signals[1].unit);
 	TEST_ASSERT_EQUAL_STRING("BatteryTemperature", decoded_signals[1].name);
-	TEST_ASSERT_EQUAL_FLOAT(12.875, decoded_signals[1].value);
+	TEST_ASSERT_EQUAL_FLOAT(606, decoded_signals[1].value);
 }
 
 void test_successful_encoding(void) {

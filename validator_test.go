@@ -249,54 +249,6 @@ func TestSignalValidate(t *testing.T) {
 		err := signal.Validate()
 		a.Equal(ErrorSignalFactorIsZero, err)
 	})
-
-	t.Run("should validate signal with correct integer and decimal figures", func(t *testing.T) {
-		a := assert.New(t)
-
-		signal := &Signal{
-			Name:           "Speed",
-			StartBit:       0,
-			Length:         16,
-			IntegerFigures: 8,
-			DecimalFigures: 8,
-			Factor:         0.1,
-		}
-
-		err := signal.Validate()
-		a.Nil(err)
-	})
-
-	t.Run("should return error when integer+decimal figures != length", func(t *testing.T) {
-		a := assert.New(t)
-
-		signal := &Signal{
-			Name:           "Speed",
-			StartBit:       0,
-			Length:         16,
-			IntegerFigures: 4,
-			DecimalFigures: 4,
-			Factor:         0.1,
-		}
-
-		err := signal.Validate()
-		a.Equal(ErrorSignalFigures, err)
-	})
-
-	t.Run("should allow zero figures when both are zero", func(t *testing.T) {
-		a := assert.New(t)
-
-		signal := &Signal{
-			Name:           "Speed",
-			StartBit:       0,
-			Length:         2,
-			IntegerFigures: 0,
-			DecimalFigures: 0,
-			Factor:         0.1,
-		}
-
-		err := signal.Validate()
-		a.Nil(err)
-	})
 }
 
 func TestSignalTopicValidate(t *testing.T) {

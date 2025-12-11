@@ -18,16 +18,14 @@ type Signal struct {
 	StartBit uint8
 	Length   uint8
 	Endianness
-	Signed         bool
-	IntegerFigures uint8
-	DecimalFigures uint8
-	Factor         float32
-	Offset         float32
-	Min            float32
-	Max            float32
-	Unit           string
-	Receivers      []Node
-	Topic          string
+	Signed    bool
+	Factor    float32
+	Offset    float32
+	Min       float32
+	Max       float32
+	Unit      string
+	Receivers []Node
+	Topic     string
 }
 
 type Node string
