@@ -100,157 +100,6 @@ func TestConfigValidate(t *testing.T) {
 	})
 }
 
-func TestMessageValidate(t *testing.T) {
-	t.Run("should validate message with valid DLC", func(t *testing.T) {
-		a := assert.New(t)
-
-		message := &Message{
-			ID:          123,
-			Name:        "EngineSpeed",
-			DLC:         1,
-			Transmitter: "Engine",
-			Signals: []Signal{
-				{
-					Name:     "Speed",
-					StartBit: 0,
-					Length:   2,
-					Factor:   0.1,
-					Min:      0,
-					Max:      100,
-				},
-			},
-		}
-
-		err := message.Validate()
-		a.Nil(err)
-	})
-
-	t.Run("should return error when message DLC > 8", func(t *testing.T) {
-		a := assert.New(t)
-
-		message := &Message{
-			ID:          123,
-			Name:        "EngineSpeed",
-			DLC:         9,
-			Transmitter: "Engine",
-		}
-
-		err := message.Validate()
-		a.Equal(ErrorMessageDLCOutOfBounds, err)
-	})
-
-	t.Run("should return error when signal lengths exceed message DLC", func(t *testing.T) {
-		a := assert.New(t)
-
-		message := &Message{
-			ID:          123,
-			Name:        "EngineSpeed",
-			DLC:         1,
-			Transmitter: "Engine",
-			Signals: []Signal{
-				{
-					Name:     "Speed",
-					StartBit: 0,
-					Length:   5,
-					Factor:   0.1,
-				},
-				{
-					Name:     "Temp",
-					StartBit: 5,
-					Length:   5,
-					Factor:   1.0,
-				},
-			},
-		}
-
-		err := message.Validate()
-		a.Equal(ErrorSignalLengthsGreaterThanMessageDLC, err)
-	})
-
-	t.Run("should return error for invalid signal", func(t *testing.T) {
-		a := assert.New(t)
-
-		message := &Message{
-			ID:          123,
-			Name:        "EngineSpeed",
-			DLC:         1,
-			Transmitter: "Engine",
-			Signals: []Signal{
-				{
-					Name:     "Speed",
-					StartBit: 0,
-					Length:   2,
-					Factor:   0, // Invalid: factor is zero
-				},
-			},
-		}
-
-		err := message.Validate()
-		a.NotNil(err)
-		a.Contains(err.Error(), "signal Nº0")
-	})
-}
-
-func TestSignalValidate(t *testing.T) {
-	t.Run("should validate signal with valid values", func(t *testing.T) {
-		a := assert.New(t)
-
-		signal := &Signal{
-			Name:     "Speed",
-			StartBit: 0,
-			Length:   2,
-			Factor:   0.1,
-			Min:      0,
-			Max:      100,
-		}
-
-		err := signal.Validate()
-		a.Nil(err)
-	})
-
-	t.Run("should return error when start bit >= 64", func(t *testing.T) {
-		a := assert.New(t)
-
-		signal := &Signal{
-			Name:     "Speed",
-			StartBit: 64,
-			Length:   2,
-			Factor:   0.1,
-		}
-
-		err := signal.Validate()
-		a.Equal(ErrorSignalStartBitOutOfBounds, err)
-	})
-
-	t.Run("should return error when length > 64", func(t *testing.T) {
-		a := assert.New(t)
-
-		signal := &Signal{
-			Name:     "Speed",
-			StartBit: 0,
-			Length:   65,
-			Factor:   0.1,
-		}
-
-		err := signal.Validate()
-		a.Equal(ErrorSignalLengthOutOfBounds, err)
-	})
-
-	t.Run("should return error when factor is zero", func(t *testing.T) {
-		a := assert.New(t)
-
-		signal := &Signal{
-			Name:     "Speed",
-			StartBit: 0,
-			Length:   2,
-			Factor:   0,
-		}
-
-		err := signal.Validate()
-		a.Equal(ErrorSignalFactorIsZero, err)
-	})
-}
-
 func TestSignalTopicValidate(t *testing.T) {
 	t.Run("should validate topic with valid signal and topic", func(t *testing.T) {
 		a := assert.New(t)
@@ -273,7 +122,7 @@ func TestSignalTopicValidate(t *testing.T) {
 		}
 
 		err := topic.Validate()
-		a.Equal(ErrorInvalidSignalTopic, err)
+		a.Error(err)
 	})
 
 	t.Run("should return error when topic is empty", func(t *testing.T) {
@@ -285,7 +134,7 @@ func TestSignalTopicValidate(t *testing.T) {
 		}
 
 		err := topic.Validate()
-		a.Equal(ErrorInvalidSignalTopic, err)
+		a.Error(err)
 	})
 
 	t.Run("should return error when both are empty", func(t *testing.T) {
@@ -297,6 +146,6 @@ func TestSignalTopicValidate(t *testing.T) {
 		}
 
 		err := topic.Validate()
-		a.Equal(ErrorInvalidSignalTopic, err)
+		a.Error(err)
 	})
 }

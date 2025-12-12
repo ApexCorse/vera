@@ -30,45 +30,9 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-func (m *Message) Validate() error {
-	if m.DLC > 8 {
-		return ErrorMessageDLCOutOfBounds
-	}
-
-	//TODO(lentscode): check for start bits out of bounds
-	totalLengths := uint8(0)
-
-	for i, s := range m.Signals {
-		if err := s.Validate(); err != nil {
-			return fmt.Errorf("signal Nº%d: %s", i, err.Error())
-		}
-
-		totalLengths += s.Length
-	}
-	if totalLengths > m.DLC*8 {
-		return ErrorSignalLengthsGreaterThanMessageDLC
-	}
-
-	return nil
-}
-
-func (s *Signal) Validate() error {
-	if s.StartBit >= 64 {
-		return ErrorSignalStartBitOutOfBounds
-	}
-	if s.Length > 64 {
-		return ErrorSignalLengthOutOfBounds
-	}
-	if s.Factor == 0 {
-		return ErrorSignalFactorIsZero
-	}
-
-	return nil
-}
-
 func (t *SignalTopic) Validate() error {
 	if t.Signal == "" || t.Topic == "" {
-		return ErrorInvalidSignalTopic
+		return fmt.Errorf("signal topic must have a 'signal' name and a 'topic' name")
 	}
 
 	return nil
