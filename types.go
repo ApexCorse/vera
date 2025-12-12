@@ -5,29 +5,6 @@ type Config struct {
 	Topics   []SignalTopic
 }
 
-type Message struct {
-	Name        string
-	ID          uint32
-	DLC         uint8
-	Transmitter Node
-	Signals     []Signal
-}
-
-type Signal struct {
-	Name     string
-	StartBit uint8
-	Length   uint8
-	Endianness
-	Signed    bool
-	Factor    float32
-	Offset    float32
-	Min       float32
-	Max       float32
-	Unit      string
-	Receivers []Node
-	Topic     string
-}
-
 type Node string
 
 type Endianness uint
