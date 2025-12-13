@@ -133,6 +133,8 @@ func (s *Signal) parseBitInfo(message *Message, signalBitInfo string) error {
 	s.Signed = signalSigned
 	s.StartBit = uint8(signalStartBit)
 	message.signalsTotalLength += uint8(signalLength)
+	message.signalsBitPositions[signalStartBit] = len(message.Signals)
+	message.signalsBitPositions[signalStartBit+signalLength-1] = len(message.Signals)
 
 	return nil
 }

@@ -12,8 +12,9 @@ type Message struct {
 	Transmitter Node
 	Signals     []Signal
 
-	signalsTotalLength uint8
-	lineNumber         int
+	signalsTotalLength  uint8
+	lineNumber          int
+	signalsBitPositions [64]int
 }
 
 func (m *Message) Validate() error {
@@ -24,6 +25,28 @@ func (m *Message) Validate() error {
 	//TODO(lentscode): check for start bits out of bounds
 	if m.signalsTotalLength > m.DLC*8 {
 		return errorAtLine(m.lineNumber, "sum of signal lengths must be less than or equal to (message DLC * 8)")
+	}
+
+	current := -1
+	for _, p := range m.signalsBitPositions {
+		if p == -1 {
+			continue
+		}
+
+		if current == -1 {
+			current = p
+			continue
+		}
+
+		if current != p {
+			return errorAtLine(m.lineNumber, "signals '%s' and '%s' cannot overlap", m.Signals[current].Name, m.Signals[p].Name)
+		}
+
+		current = -1
+	}
+
+	if current != -1 {
+		return errorAtLine(m.lineNumber, "signal '%s' gives problems", m.Signals[current].Name)
 	}
 
 	for _, s := range m.Signals {
@@ -38,6 +61,10 @@ func (m *Message) Validate() error {
 func NewMessageFromLines(lines []string, startLineNumber int) (*Message, error) {
 	message := &Message{
 		lineNumber: startLineNumber,
+	}
+
+	for i := range message.signalsBitPositions {
+		message.signalsBitPositions[i] = -1
 	}
 
 	if !strings.HasPrefix(lines[0], "BO_") {
