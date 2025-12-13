@@ -17,7 +17,7 @@ func (c *Config) Validate() error {
 
 	for i := range c.Messages {
 		if err := c.Messages[i].Validate(); err != nil {
-			return fmt.Errorf("message Nº%d: %s", i, err.Error())
+			return err
 		}
 
 		for j := range c.Messages[i].Signals {
