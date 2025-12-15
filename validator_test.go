@@ -96,7 +96,7 @@ func TestConfigValidate(t *testing.T) {
 
 		err := config.Validate()
 		a.NotNil(err)
-		a.Contains(err.Error(), "message Nº0")
+		a.Contains(err.Error(), "message DLC must be a number between 1 and 8")
 	})
 }
 
