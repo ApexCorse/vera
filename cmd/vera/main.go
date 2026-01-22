@@ -8,6 +8,7 @@ import (
 	"github.com/ApexCorse/vera"
 	"github.com/ApexCorse/vera/codegen"
 	"github.com/ApexCorse/vera/codegen/autodevkit"
+	"github.com/ApexCorse/vera/codegen/espidf"
 	"github.com/ApexCorse/vera/codegen/stm32hal"
 )
 
@@ -77,6 +78,8 @@ func main() {
 	case "autodevkit":
 		// can throw
 		autodevkitGeneration(buildPath, config)
+	case "espidf":
+		espidfGeneration(buildPath, config)
 	case "stm32hal":
 		stm32halGeneration(buildPath, config)
 	case "":
@@ -139,6 +142,35 @@ func stm32halGeneration(buildPath string, config *vera.Config) {
 	}
 
 	if err := stm32hal.GenerateHeader(stm32halHeaderFile, config); err != nil {
+		fmt.Println("fatal:", err.Error())
+		os.Exit(1)
+	}
+}
+
+func espidfGeneration(buildPath string, config *vera.Config) {
+	espidfSourceFilePath := buildPath + "/vera_espidf.c"
+	espidfHeaderFilePath := buildPath + "/vera_espidf.h"
+
+	espidfSourceFile, err := os.Create(espidfSourceFilePath)
+	if err != nil {
+		fmt.Println("fatal:", err.Error())
+		os.Exit(1)
+	}
+	defer espidfSourceFile.Close()
+
+	espidfHeaderFile, err := os.Create(espidfHeaderFilePath)
+	if err != nil {
+		fmt.Println("fatal:", err.Error())
+		os.Exit(1)
+	}
+	defer espidfHeaderFile.Close()
+
+	if err := espidf.GenerateSource(espidfSourceFile, config); err != nil {
+		fmt.Println("fatal:", err.Error())
+		os.Exit(1)
+	}
+
+	if err := espidf.GenerateHeader(espidfHeaderFile, config); err != nil {
 		fmt.Println("fatal:", err.Error())
 		os.Exit(1)
 	}
