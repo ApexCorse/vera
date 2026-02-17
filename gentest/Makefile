@@ -4,7 +4,7 @@ test: build
 	./test
 
 clean:
-	rm vera* *.o test
+	rm -rf vera* *.o test
 
 build: pre-build test.o vera.o unity.o
 	cc -o test test.o vera.o unity.o

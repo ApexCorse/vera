@@ -7,4 +7,5 @@ build
 vera.*
 vera
 vera_*
+!*.tmpl
 coverage.out
