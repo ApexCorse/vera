@@ -72,7 +72,9 @@ func NewSignalFromLine(message *Message, line string, lineNumber int) (*Signal, 
 		return nil, err
 	}
 
-	signal.parseReceivers(lineParts[7])
+	if len(lineParts) == 8 {
+		signal.parseReceivers(lineParts[7])
+	}
 
 	return signal, nil
 }
