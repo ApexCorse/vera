@@ -1,0 +1,154 @@
+#include "vera.h"
+
+#include <string.h>
+#include <stdio.h>
+#include <math.h>
+
+uint64_t _get_payload_by_start_and_length(uint8_t* payload, uint8_t start, uint8_t length) {
+	uint64_t res = 0ULL;
+
+	for (uint8_t i = 0; i < length; i++) {
+		uint8_t current_bit_index = start + i;
+		uint8_t byte_index = current_bit_index / 8;
+		uint8_t bit_offset_in_byte = current_bit_index % 8;
+		uint8_t bit = (payload[byte_index] >> (7 - bit_offset_in_byte)) & 1;
+		
+		res |= (uint64_t)bit << (length - 1 - i);
+	}
+
+	return res;
+}
+
+void _insert_data_in_payload(uint8_t* payload, uint64_t data, uint8_t start, uint8_t length) {
+	for (uint8_t i = start; i < start + length; i++) {
+		uint8_t payload_index = i / 8;
+		uint8_t shift_right = start + length - i - 1;
+		uint8_t shift_left = 7 - (i % 8);
+
+		payload[payload_index] |= ((data >> shift_right) & 1) << (shift_left);
+	}
+}
+
+vera_err_t _decode_signal(
+	vera_can_rx_frame_t*   frame,
+	vera_signal_t*         signal,
+	vera_decoded_signal_t* res
+) {
+	strcpy(res->name, signal->name);
+	strcpy(res->unit, signal->unit);
+	strcpy(res->topic, signal->topic);
+
+	if (signal->start_bit >= frame->dlc * 8 || signal->start_bit + signal->dlc > frame->dlc * 8) {
+		return vera_err_out_of_bounds;		
+	}
+
+	res->value = _get_payload_by_start_and_length(
+		frame->data,
+		signal->start_bit,
+		signal->dlc
+	);
+
+	res->value *= signal->factor;
+	res->value += signal->offset;
+	if (res->value < signal->min)
+		res->value = signal->min;
+	if (res->value > signal->max)
+		res->value = signal->max;
+
+	return vera_err_ok;
+}
+
+vera_err_t _decode_message(
+	vera_can_rx_frame_t*    frame,
+	vera_message_t*         message,
+	vera_signal_t*          signals,
+	vera_decoding_result_t* result
+) {
+	if (!result->decoded_signals) return vera_err_null_arg;
+
+	for (uint8_t i = 0; i < message->n_signals; i++) {
+		vera_err_t err = _decode_signal(
+			frame,
+			signals + i,
+			result->decoded_signals + i
+		);
+		if (err != vera_err_ok) {
+			return err;
+		}
+		result->n_signals++;
+	}
+
+	return vera_err_ok;
+}
+
+vera_err_t vera_decode_can_frame(
+	vera_can_rx_frame_t*    frame,
+	vera_decoding_result_t* result
+) {
+	switch(frame->id) {
+{{- range .Messages}}
+		case {{printf "%#x" .ID}}: {
+			vera_message_t message = {
+				.id = {{printf "%#x" .ID}},
+				.name = "{{.Name}}",
+				.dlc = {{.DLC}},
+				.n_signals = {{len .Signals}}
+			};
+
+			vera_signal_t signals[{{len .Signals}}];
+			{{- range $i, $signal := .Signals}}
+			signals[{{$i}}]	= (vera_signal_t){
+				.name = "{{$signal.Name}}",
+				.unit = "{{$signal.Unit}}",
+				.start_bit = {{$signal.StartBit}},
+				.dlc = {{$signal.Length}},
+				.endianness = {{$signal.Endianness}},
+				.sign = {{$signal.Signed}},
+				.factor = {{printf "%.4f" $signal.Factor}},
+				.offset = {{printf "%.4f" $signal.Offset}},
+				.min = {{printf "%.4f" $signal.Min}},
+				.max = {{printf "%.4f" $signal.Max}},
+				.topic = "{{$signal.Topic}}"
+			};
+			{{- end}}
+
+			vera_err_t err = _decode_message(
+				frame,
+				&message,
+				signals,
+				result
+			);
+			if (err != vera_err_ok) {
+				return err;
+			}
+			break;
+		}
+{{- end}}
+	}
+}
+
+{{- range .Messages}}
+
+vera_err_t vera_encode_{{.Name}}(
+	vera_can_tx_frame_t* frame
+	{{- range $s := .Signals -}}
+	,
+	uint64_t {{$s.Name}}
+	{{- end}}
+) {
+	if (!frame) return vera_err_null_arg;
+
+	memset(frame->data, 0, sizeof(uint8_t)*8);
+	frame->id = {{printf "%#x" .ID}};
+	frame->dlc = {{.DLC}};
+	
+	{{- range .Signals}}	
+	_insert_data_in_payload(frame->data, {{.Name}}, {{.StartBit}}, {{.Length}});
+	{{- end}}
+	return vera_err_ok;
+}
+{{end}}
+
+{{- range .Messages}}
+const size_t vera_n_signals_{{.Name}} = {{len .Signals}};
+{{- end}}

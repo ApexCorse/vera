@@ -10,7 +10,7 @@ void test_successful_decoding(void) {
 		.dlc = 8,
 		.data = {0x00, 0x00, 0x7d, 0xf4, 0x0c, 0xe5, 0x64, 0x10},
 	};
-	vera_decoded_signal_t signals[vera_get_n_signals_Message1()];
+	vera_decoded_signal_t signals[vera_n_signals_Message1];
 	vera_decoding_result_t result = {
 		.n_signals = 0,
 		.decoded_signals = signals

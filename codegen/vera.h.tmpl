@@ -1,0 +1,103 @@
+#ifndef VERA_H
+#define VERA_H
+
+#include <stdbool.h>
+#include <stdint.h>
+#include <stddef.h>
+
+#define CAN_MAX_DATA_LEN 8
+
+typedef struct {
+	uint32_t id;
+	uint8_t  dlc;
+	uint8_t  data[CAN_MAX_DATA_LEN];
+
+	bool is_extended_id;
+	bool is_rtr;
+	bool is_fd;
+	bool bit_rate_switch;
+	bool error_state_indicator;
+
+	uint64_t timestamp;
+} vera_can_rx_frame_t;
+
+typedef struct {
+	uint32_t id;
+	uint8_t  dlc;
+	uint8_t  data[CAN_MAX_DATA_LEN];
+
+	bool is_extended_id;
+	bool is_rtr;
+	bool is_fd;
+	bool bit_rate_switch;
+	bool error_state_indicator;
+
+	uint64_t timestamp;
+} vera_can_tx_frame_t;
+
+typedef struct {
+	char    name[32];
+	uint8_t start_bit;
+	uint8_t dlc;
+	uint8_t endianness;
+	bool    sign;
+	uint8_t integer_figures;
+	uint8_t decimal_figures;
+	float   factor;
+	float   offset;
+	float   min;
+	float   max;
+	char    unit[32];
+	char**  receivers;
+	char    topic[32];
+} vera_signal_t;
+
+typedef struct {
+	uint32_t       id;
+	char           name[32];
+	uint8_t        dlc;
+	char*          transmitter;
+	vera_signal_t* signals;
+	uint8_t        n_signals;
+} vera_message_t;
+
+typedef struct {
+	char     name[32];
+	char     unit[32];
+	float    value;
+	uint64_t timestamp;
+	char     topic[32];
+} vera_decoded_signal_t;
+
+typedef struct {
+	uint8_t n_signals;
+	vera_decoded_signal_t* decoded_signals;
+} vera_decoding_result_t;
+
+typedef enum {
+	vera_err_ok,
+	vera_err_allocation,
+	vera_err_out_of_bounds,
+	vera_err_null_arg
+} vera_err_t;
+
+vera_err_t vera_decode_can_frame(
+	vera_can_rx_frame_t*   frame,
+	vera_decoding_result_t* result
+);
+
+{{- range .Messages}}
+
+vera_err_t vera_encode_{{.Name}}(
+	vera_can_tx_frame_t* frame
+	{{- range $s := .Signals -}}
+	,
+	uint64_t {{$s.Name}}
+	{{- end}}
+);{{end}}
+
+{{- range .Messages}}
+extern const size_t vera_n_signals_{{.Name}};
+{{- end}}
+
+#endif // VERA_H
