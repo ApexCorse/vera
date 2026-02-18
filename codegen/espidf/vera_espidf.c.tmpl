@@ -1,19 +1,4 @@
-package espidf
-
-const (
-	headerFile = `#ifndef VERA_ESPIDF_H
-#define VERA_ESPIDF_H
-
-#include "vera.h"
-#include "driver/twai.h"
-
-vera_err_t vera_decode_espidf_rx_frame(const twai_frame_t* frame, vera_decoding_result_t* result);
-
-%s
-
-#endif // VERA_ESPIDF_H`
-
-	sourceFile = `#include "vera_espidf.h"
+#include "vera_espidf.h"
 #include <string.h>
 
 vera_err_t vera_decode_espidf_rx_frame(const twai_frame_t* frame, vera_decoding_result_t* result) {
@@ -31,5 +16,23 @@ vera_err_t vera_decode_espidf_rx_frame(const twai_frame_t* frame, vera_decoding_
     return vera_decode_can_frame(&vera_frame, result);
 }
 
-%s`
-)
+{{- range .Messages}}
+
+vera_err_t vera_encode_espidf_{{.Name}}(
+	twai_frame_t* frame
+	{{- range .Signals -}}
+	,
+	uint64_t {{.Name}}
+	{{- end}}
+) {
+	if (!frame || !frame->buffer)	return vera_err_null_arg;
+
+	memset(frame->buffer, 0, sizeof(uint8_t)*8);
+	frame->header.id = {{printf "%#x" .ID}};
+	frame->header.dlc = {{.DLC}};
+	{{range .Signals}}
+	_insert_data_in_payload(frame->buffer, {{.Name}}, {{.StartBit}}, {{.Length}});
+	{{- end}}
+	return vera_err_ok;
+}
+{{- end}}

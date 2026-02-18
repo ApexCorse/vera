@@ -1,0 +1,20 @@
+#ifndef VERA_ESPIDF_H
+#define VERA_ESPIDF_H
+
+#include "vera.h"
+#include "driver/twai.h"
+
+vera_err_t vera_decode_espidf_rx_frame(const twai_frame_t* frame, vera_decoding_result_t* result);
+
+{{- range .Messages}}
+
+vera_err_t vera_encode_espidf_{{.Name}}(
+	twai_frame_t* frame
+	{{- range .Signals -}}
+	,
+	uint64_t {{.Name}}
+	{{- end}}
+);
+{{- end}}
+
+#endif // VERA_ESPIDF_H

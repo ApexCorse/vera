@@ -29,7 +29,7 @@ func GenerateHeader(w io.Writer, config *vera.Config) error {
 	return nil
 }
 
-func GenerateSource(w io.Writer, config *vera.Config, headerFile string) error {
+func GenerateSource(w io.Writer, config *vera.Config) error {
 	sourceTemplateContent, err := templateFiles.ReadFile("vera.c.tmpl")
 	if err != nil {
 		return err
