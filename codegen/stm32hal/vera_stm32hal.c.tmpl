@@ -1,22 +1,4 @@
-package stm32hal
-
-const (
-	headerFile = `#ifndef VERA_STM32HAL_H
-#define VERA_STM32HAL_H
-
-#include "vera.h"
-#include "stm32f2xx_hal_can.h"
-
-vera_err_t vera_decode_stm32hal_rx_frame(
-	CAN_RxHeaderTypeDef*    frame,
-	uint8_t*                data,
-	vera_decoding_result_t* result
-);
-
-%s
-
-#endif // VERA_STM32HAL_H`
-	sourceFile = `#include "vera_stm32hal.h"
+#include "vera_stm32hal.h"
 #include <string.h>
 
 vera_err_t vera_decode_stm32hal_rx_frame(
@@ -35,5 +17,24 @@ vera_err_t vera_decode_stm32hal_rx_frame(
 	return vera_decode_can_frame(vera_frame, result);
 }
 
-%s`
-)
+{{- range .Messages}}
+
+vera_err_t vera_encode_autodevkit_{{.Name}}(
+	CAN_TxHeaderTypeDef* frame,
+	uint8_t*             data
+	{{- range .Signals -}}
+	,
+	uint64_t {{.Name}}
+	{{- end}}
+) {
+	if (!frame)	return vera_err_null_arg;
+
+	memset(data, 0, sizeof(uint8_t)*8);
+	frame->ID = {{printf "%#x" .ID}};
+	frame->DLC = {{.DLC}};
+	{{range .Signals}}
+	_insert_data_in_payload(data, {{.Name}}, {{.StartBit}}, {{.Length}});
+	{{- end}}
+	return vera_err_ok;
+}
+{{- end}}

@@ -1,0 +1,25 @@
+#ifndef VERA_STM32HAL_H
+#define VERA_STM32HAL_H
+
+#include "vera.h"
+#include "stm32f2xx_hal_can.h"
+
+vera_err_t vera_decode_stm32hal_rx_frame(
+	CAN_RxHeaderTypeDef*    frame,
+	uint8_t*                data,
+	vera_decoding_result_t* result
+);
+
+{{- range .Messages}}
+
+vera_err_t vera_encode_autodevkit_{{.Name}}(
+	CAN_TxHeaderTypeDef* frame,
+	uint8_t*             data
+	{{- range .Signals -}}
+	,
+	uint64_t {{.Name}}
+	{{- end}}
+);
+{{- end}}
+
+#endif // VERA_STM32HAL_H

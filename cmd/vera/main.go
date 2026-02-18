@@ -69,7 +69,7 @@ func main() {
 		fmt.Println("fatal:", err.Error())
 		os.Exit(1)
 	}
-	if err = codegen.GenerateSource(sourceFile, config, "vera.h"); err != nil {
+	if err = codegen.GenerateSource(sourceFile, config); err != nil {
 		fmt.Println("fatal:", err.Error())
 		os.Exit(1)
 	}

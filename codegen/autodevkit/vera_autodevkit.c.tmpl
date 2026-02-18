@@ -1,0 +1,35 @@
+#include "vera_autodevkit.h"
+#include <string.h>
+
+vera_err_t vera_decode_autodevkit_rx_frame(CANRxFrame* frame, vera_decoding_result_t* result) {
+	vera_can_rx_frame_t vera_frame = {
+		.id             = frame->ID,
+		.dlc            = frame->DLC,
+		.is_extended_id = frame->TYPE,
+		.is_fd          = frame->OPERATION == 0x01U ? true : false
+	};
+	memcpy(vera_frame.data, frame->data8, frame->DLC);
+
+	return vera_decode_can_frame(&vera_frame, result);
+}
+
+{{- range .Messages}}
+
+vera_err_t vera_encode_autodevkit_{{.Name}}(
+	CANTxFrame* frame
+	{{- range .Signals -}}
+	,
+	uint64_t {{.Name}}
+	{{- end}}
+) {
+	if (!frame)	return vera_err_null_arg;
+
+	memset(frame->data8, 0, sizeof(uint8_t)*8);
+	frame->ID = {{printf "%#x" .ID}};
+	frame->DLC = {{.DLC}};
+	{{range .Signals}}
+	_insert_data_in_payload(frame->data8, {{.Name}}, {{.StartBit}}, {{.Length}});
+	{{- end}}
+	return vera_err_ok;
+}
+{{- end}}
