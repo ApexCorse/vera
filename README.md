@@ -96,7 +96,7 @@ The `codegen/` package handles C code generation:
 
 | File | Description |
 |------|-------------|
-| `templates.go` | Core C templates (types, helpers, decoding/encoding logic) |
+| `vera.{h,c}.tmpl` | Source and header file templates (used via `text/template`) |
 | `codegen.go` | Function for generating standard `vera.h` and `vera.c` |
 | `espidf/` | ESP-IDF HAL adapter (decodes ESP's native `twai_frame_t` type) |
 | `stm32hal/` | STM32 HAL adapter (decodes `CAN_RxHeaderTypeDef` and `CAN_TxHeaderTypeDef`) |
@@ -259,7 +259,8 @@ The GitHub Actions workflow handles:
 ├── cmd/vera/              # CLI entry point (main.go)
 ├── codegen/               # C code generation
 │   ├── codegen.go         # Generic code generation
-│   ├── templates.go       # Core C templates
+│   ├── vera.c.tmpl        # Source file template
+│   ├── vera.h.tmpl        # Header file template
 │   ├── espidf/            # ESP-IDF HAL adapter
 │   ├── stm32hal/          # STM32 HAL adapter
 │   └── autodevkit/        # AutoDevKit adapter
