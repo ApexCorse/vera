@@ -14,7 +14,7 @@ Vera exists to simplify the workflow of working with CAN networks by providing:
 The generated code provides:
 - Signal decoding from raw CAN frames with automatic scaling/offset conversion
 - Signal encoding for creating CAN frames
-- MQTT topic mapping via TP_ instructions
+- MQTT topic mapping via TP_ instructions, to integrate in MQTT networks and pipelines
 - Validation for out-of-bounds values
 
 ## Installation
@@ -181,193 +181,21 @@ void process_can_message(CAN_RxHeaderTypeDef* can_header, uint8_t* data) {
 }
 ```
 
-## Creating New HAL Extensions
-
-Vera's HAL extension system uses a small, well-defined interface. To create support for a new SDK, implement the two functions in a new package under `codegen/`:
-
-### Required Functions
-
-```go
-package yourhal
-
-import (
-    "io"
-    "github.com/ApexCorse/vera"
-)
-
-// GenerateHeader writes the HAL-specific header file content
-func GenerateHeader(w io.Writer, config *vera.Config) error
-
-// GenerateSource writes the HAL-specific source file content
-func GenerateSource(w io.Writer, config *vera.Config) error
-```
-
-### Example: Minimal HAL Implementation
-
-```go
-package yourhal
-
-import (
-    "fmt"
-    "io"
-    "github.com/ApexCorse/vera"
-)
-
-const (
-    headerFile = `#ifndef VERA_YOURHAL_H
-#define VERA_YOURHAL_H
-
-#include "vera.h"
-#include "your_hal_header.h"
-
-// Declare your SDK-specific decoding function
-// This function should convert your SDK's CAN frame format
-// to the common `vera_can_rx_frame_t` structure
-vera_err_t yourhal_decode_rx_frame(
-    YourSDKFrameType* frame,
-    vera_decoding_result_t* result
-);
-
-%s // Include encoding function declarations
-
-#endif // VERA_YOURHAL_H`
-)
-
-const (
-    sourceFile = `#include "vera_yourhal.h"
-
-// Your SDK-specific decoding implementation
-// 1. Convert input frame to vera_can_rx_frame_t
-// 2. Call vera_decode_can_frame()
-yourhal_decode_rx_frame(YourSDKFrameType* frame, vera_decoding_result_t* result) {
-    vera_can_rx_frame_t vera_frame = {
-        .id = convert_id(frame),        // Convert SDK ID format
-        .dlc = frame->dlc,
-        // Copy data bytes...
-    };
-
-    return vera_decode_can_frame(&vera_frame, result);
-}
-
-%s // Include encoding function definitions
-`)
-)
-
-func GenerateHeader(w io.Writer, config *vera.Config) error {
-    s := fmt.Sprintf(headerFile, generateEncodingDecls(config))
-    if _, err := w.Write([]byte(s)); err != nil {
-        return err
-    }
-    return nil
-}
-
-func GenerateSource(w io.Writer, config *vera.Config) error {
-    s := fmt.Sprintf(sourceFile, generateEncodingDefs(config))
-    if _, err := w.Write([]byte(s)); err != nil {
-        return err
-    }
-    return nil
-}
-
-func generateEncodingDecls(config *vera.Config) string {
-    var b strings.Builder
-    for i, m := range config.Messages {
-        b.WriteString(fmt.Sprintf("vera_err_t yourhal_encode_%s(\n", m.Name))
-        b.WriteString("\tYourSDKTxFrame* frame,\n")
-        for j, s := range m.Signals {
-            b.WriteString(fmt.Sprintf("\tuint64_t %s", s.Name))
-            if j < len(m.Signals)-1 {
-                b.WriteString(",\n")
-            } else {
-                b.WriteString("\n")
-            }
-        }
-        b.WriteString(");\n")
-        if i < len(config.Messages)-1 {
-            b.WriteString("\n")
-        }
-    }
-    return b.String()
-}
-
-func generateEncodingDefs(config *vera.Config) string {
-    var b strings.Builder
-    for i, m := range config.Messages {
-        b.WriteString(fmt.Sprintf("yourhal_encode_%s(", m.Name))
-        b.WriteString("\tYourSDKTxFrame* frame,\n")
-        for j, s := range m.Signals {
-            b.WriteString(fmt.Sprintf("\tuint64_t %s", s.Name))
-            if j < len(m.Signals)-1 {
-                b.WriteString(",\n")
-            } else {
-                b.WriteString("\n")
-            }
-        }
-        b.WriteString(") {\n")
-        b.WriteString("\tmemset(frame->data, 0, 8);\n")
-        b.WriteString(fmt.Sprintf("\tframe->id = 0x%X;\n", m.ID))
-        b.WriteString(fmt.Sprintf("\tframe->dlc = %d;\n", m.DLC))
-        // Insert each signal into the frame data...
-        b.WriteString("\treturn vera_err_ok;\n")
-        b.WriteString("}\n")
-        if i < len(config.Messages)-1 {
-            b.WriteString("\n")
-        }
-    }
-    return b.String()
-}
-```
-
-### Adding the SDK to the CLI
-
-Edit `cmd/vera/main.go` to add the new SDK option:
-
-```go
-// Import your new package
-import (
-    "github.com/ApexCorse/vera/codegen/yourhal"
-    // ... other imports
-)
-
-// In the main switch, add your case:
-switch *sdk {
-case "yourhal":
-    yourhalGeneration(buildPath, config)
-// ... other cases
-case "":
-default:
-    fmt.Printf("fatal: sdk '%s' not supported\n", *sdk)
-    os.Exit(1)
-}
-```
-
-### SDK-Specific Implementation Notes
-
-When implementing `GenerateHeader` and `GenerateSource` for a new SDK:
-
-1. **Header file**: Include your SDK's CAN headers, declare your SDK-specific decode function, include standard `vera.h`
-
-2. **Source file**: Implement the SDK-specific decode wrapper (converts SDK frame → `vera_can_rx_frame_t`), include helper decoding/encoding functions
-
-3. **Decoding conversion**: The adapter should convert the SDK's frame format to `vera_can_rx_frame_t` and call `vera_decode_can_frame()` for the actual decoding logic
-
-4. **Encoding**: Generate encode functions that populate the SDK's frame format with signal values
-
 ## DBC File Format
 
 Vera expects DBC files with the following format:
 
 ```
 BO_ <message_id> <message_name>: <dlc> <transmitter>
-    SG_ <signal_name> : <start_bit>|<length>@<endianness><sign>(<integer_figures>,<decimal_figures>) (<factor>,<offset>) [<min>|<max>] "<unit>" <receivers>
+    SG_ <signal_name> : <start_bit>|<length>@<endianness><sign> (<factor>,<offset>) [<min>|<max>] "<unit>" <receivers>
 TP_ <signal_name> <mqtt_topic>
 ```
 
 **Important notes:**
 - Start bit and length are in **bits**, DLC is in **bytes**
-- Receivers are parsed but not used in code generation
+- Receivers are parsed if present, but not used in code generation
 - Only **little-endian** (endiananness `1`) is currently supported
-- TP_ instructions are placed at the same level as BO_ instructions (not indented)
+- TP_ instructions are placed at the same level as BO_ instructions (not indented), and refer to the signals, not the messages
 
 ### Example DBC File
 
