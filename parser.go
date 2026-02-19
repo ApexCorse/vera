@@ -63,6 +63,9 @@ Should be:
 
 	signalName := lineParts[1]
 	topic := lineParts[2]
+	topic = strings.TrimFunc(topic, func(r rune) bool {
+		return r == '"'
+	})
 
 	signalTopic := &SignalTopic{
 		Topic:  topic,
