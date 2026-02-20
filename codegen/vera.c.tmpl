@@ -125,6 +125,8 @@ vera_err_t vera_decode_can_frame(
 		}
 {{- end}}
 	}
+
+	return vera_err_ok;
 }
 
 {{- range .Messages}}
