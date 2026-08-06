@@ -3,8 +3,14 @@ package vera
 import (
 	"fmt"
 	"io"
+	"regexp"
+	"strconv"
 	"strings"
 )
+
+const mqttTopicCommentPrefix = "vera:mqtt-topic="
+
+var signalCommentPattern = regexp.MustCompile(`^CM_\s+SG_\s+(0x[0-9A-Fa-f]+|[0-9]+)\s+(\S+)\s+"((?:[^"\\]|\\.)*)"\s*;\s*$`)
 
 func Parse(r io.Reader) (*Config, error) {
 	bytes, err := io.ReadAll(r)
@@ -40,36 +46,50 @@ func Parse(r io.Reader) (*Config, error) {
 
 			config.Messages = append(config.Messages, *message)
 			i = j - 1
-		} else if strings.HasPrefix(lines[i], "TP_") {
-			signalTopic, err := parseSignalTopic(lines[i])
+		} else if strings.HasPrefix(lines[i], "CM_ SG_") {
+			signalTopic, err := parseSignalTopicComment(lines[i])
 			if err != nil {
 				return nil, err
 			}
 
-			config.Topics = append(config.Topics, *signalTopic)
+			if signalTopic != nil {
+				config.Topics = append(config.Topics, *signalTopic)
+			}
 		}
 	}
 
 	return config, nil
 }
 
-func parseSignalTopic(topicLine string) (*SignalTopic, error) {
-	lineParts := strings.Fields(topicLine)
-	if len(lineParts) != 3 {
-		return nil, fmt.Errorf(`signal topic has wrong structure: %s
+func parseSignalTopicComment(commentLine string) (*SignalTopic, error) {
+	matches := signalCommentPattern.FindStringSubmatch(commentLine)
+	if matches == nil {
+		if strings.Contains(commentLine, mqttTopicCommentPrefix) {
+			return nil, fmt.Errorf(`MQTT topic comment has wrong structure: %s
 Should be:
-	TP_ <SignalName> <Topic>`, topicLine)
+	CM_ SG_ <MessageID> <SignalName> "vera:mqtt-topic=<Topic>";`, commentLine)
+		}
+
+		return nil, nil
 	}
 
-	signalName := lineParts[1]
-	topic := lineParts[2]
-	topic = strings.TrimFunc(topic, func(r rune) bool {
-		return r == '"'
-	})
+	comment, err := strconv.Unquote(`"` + matches[3] + `"`)
+	if err != nil {
+		return nil, fmt.Errorf("invalid signal comment: %w", err)
+	}
+	if !strings.HasPrefix(comment, mqttTopicCommentPrefix) {
+		return nil, nil
+	}
+
+	messageID, err := strconv.ParseUint(matches[1], 0, 32)
+	if err != nil {
+		return nil, fmt.Errorf("invalid message ID in MQTT topic comment: %w", err)
+	}
 
 	signalTopic := &SignalTopic{
-		Topic:  topic,
-		Signal: signalName,
+		MessageID: uint32(messageID),
+		Topic:     strings.TrimPrefix(comment, mqttTopicCommentPrefix),
+		Signal:    matches[2],
 	}
 
 	return signalTopic, nil

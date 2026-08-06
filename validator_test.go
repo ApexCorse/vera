@@ -31,8 +31,9 @@ func TestConfigValidate(t *testing.T) {
 			},
 			Topics: []SignalTopic{
 				{
-					Topic:  "vehicle/engine/speed",
-					Signal: "Speed",
+					MessageID: 123,
+					Topic:     "vehicle/engine/speed",
+					Signal:    "Speed",
 				},
 			},
 		}
@@ -48,8 +49,9 @@ func TestConfigValidate(t *testing.T) {
 		config := &Config{
 			Topics: []SignalTopic{
 				{
-					Topic:  "",
-					Signal: "Speed",
+					MessageID: 123,
+					Topic:     "",
+					Signal:    "Speed",
 				},
 			},
 		}
@@ -65,12 +67,14 @@ func TestConfigValidate(t *testing.T) {
 		config := &Config{
 			Topics: []SignalTopic{
 				{
-					Topic:  "vehicle/engine/speed",
-					Signal: "Speed",
+					MessageID: 123,
+					Topic:     "vehicle/engine/speed",
+					Signal:    "Speed",
 				},
 				{
-					Topic:  "vehicle/engine/rpm",
-					Signal: "Speed",
+					MessageID: 123,
+					Topic:     "vehicle/engine/rpm",
+					Signal:    "Speed",
 				},
 			},
 		}
@@ -78,6 +82,26 @@ func TestConfigValidate(t *testing.T) {
 		err := config.Validate()
 		a.NotNil(err)
 		a.Contains(err.Error(), "duplicate signal topic")
+	})
+
+	t.Run("should scope topics by message ID and signal name", func(t *testing.T) {
+		a := assert.New(t)
+
+		config := &Config{
+			Messages: []Message{
+				{ID: 123, DLC: 1, Signals: []Signal{{Name: "Speed", Length: 1, Factor: 1}}},
+				{ID: 456, DLC: 1, Signals: []Signal{{Name: "Speed", Length: 1, Factor: 1}}},
+			},
+			Topics: []SignalTopic{
+				{MessageID: 123, Signal: "Speed", Topic: "vehicle/engine/speed"},
+				{MessageID: 456, Signal: "Speed", Topic: "vehicle/wheel/speed"},
+			},
+		}
+
+		err := config.Validate()
+		a.Nil(err)
+		a.Equal("vehicle/engine/speed", config.Messages[0].Signals[0].Topic)
+		a.Equal("vehicle/wheel/speed", config.Messages[1].Signals[0].Topic)
 	})
 
 	t.Run("should return error for invalid message", func(t *testing.T) {
@@ -105,8 +129,9 @@ func TestSignalTopicValidate(t *testing.T) {
 		a := assert.New(t)
 
 		topic := &SignalTopic{
-			Topic:  "vehicle/engine/speed",
-			Signal: "Speed",
+			MessageID: 123,
+			Topic:     "vehicle/engine/speed",
+			Signal:    "Speed",
 		}
 
 		err := topic.Validate()
@@ -117,8 +142,9 @@ func TestSignalTopicValidate(t *testing.T) {
 		a := assert.New(t)
 
 		topic := &SignalTopic{
-			Topic:  "vehicle/engine/speed",
-			Signal: "",
+			MessageID: 123,
+			Topic:     "vehicle/engine/speed",
+			Signal:    "",
 		}
 
 		err := topic.Validate()
@@ -129,8 +155,9 @@ func TestSignalTopicValidate(t *testing.T) {
 		a := assert.New(t)
 
 		topic := &SignalTopic{
-			Topic:  "",
-			Signal: "Speed",
+			MessageID: 123,
+			Topic:     "",
+			Signal:    "Speed",
 		}
 
 		err := topic.Validate()
@@ -141,8 +168,9 @@ func TestSignalTopicValidate(t *testing.T) {
 		a := assert.New(t)
 
 		topic := &SignalTopic{
-			Topic:  "",
-			Signal: "",
+			MessageID: 123,
+			Topic:     "",
+			Signal:    "",
 		}
 
 		err := topic.Validate()
