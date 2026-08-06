@@ -15,6 +15,7 @@ const (
 )
 
 type SignalTopic struct {
-	Topic  string
-	Signal string
+	MessageID uint32
+	Topic     string
+	Signal    string
 }

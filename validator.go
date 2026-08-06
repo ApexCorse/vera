@@ -2,17 +2,23 @@ package vera
 
 import "fmt"
 
+type signalTopicKey struct {
+	messageID uint32
+	signal    string
+}
+
 func (c *Config) Validate() error {
-	topicsMap := make(map[string]string)
+	topicsMap := make(map[signalTopicKey]string)
 	for i, t := range c.Topics {
 		if err := t.Validate(); err != nil {
 			return fmt.Errorf("topic Nº%d: %w", i, err)
 		}
 
-		if _, ok := topicsMap[t.Signal]; ok {
-			return fmt.Errorf("duplicate signal topic: %s", t.Topic)
+		key := signalTopicKey{messageID: t.MessageID, signal: t.Signal}
+		if _, ok := topicsMap[key]; ok {
+			return fmt.Errorf("duplicate signal topic for message %d, signal %s", t.MessageID, t.Signal)
 		}
-		topicsMap[t.Signal] = t.Topic
+		topicsMap[key] = t.Topic
 	}
 
 	for i := range c.Messages {
@@ -21,7 +27,8 @@ func (c *Config) Validate() error {
 		}
 
 		for j := range c.Messages[i].Signals {
-			if value, ok := topicsMap[c.Messages[i].Signals[j].Name]; ok {
+			key := signalTopicKey{messageID: c.Messages[i].ID, signal: c.Messages[i].Signals[j].Name}
+			if value, ok := topicsMap[key]; ok {
 				c.Messages[i].Signals[j].Topic = value
 			}
 		}

@@ -14,7 +14,7 @@ Vera exists to simplify the workflow of working with CAN networks by providing:
 The generated code provides:
 - Signal decoding from raw CAN frames with automatic scaling/offset conversion
 - Signal encoding for creating CAN frames
-- MQTT topic mapping via TP_ instructions, to integrate in MQTT networks and pipelines
+- MQTT topic mapping via standard DBC signal comments, to integrate in MQTT networks and pipelines
 - Validation for out-of-bounds values
 
 ## Installation
@@ -188,14 +188,16 @@ Vera expects DBC files with the following format:
 ```
 BO_ <message_id> <message_name>: <dlc> <transmitter>
     SG_ <signal_name> : <start_bit>|<length>@<endianness><sign> (<factor>,<offset>) [<min>|<max>] "<unit>" <receivers>
-TP_ <signal_name> <mqtt_topic>
+CM_ SG_ <message_id> <signal_name> "vera:mqtt-topic=<mqtt_topic>";
 ```
 
 **Important notes:**
 - Start bit and length are in **bits**, DLC is in **bytes**
 - Receivers are parsed if present, but not used in code generation
 - Only **little-endian** (endiananness `1`) is currently supported
-- TP_ instructions are placed at the same level as BO_ instructions (not indented), and refer to the signals, not the messages
+- MQTT topics use standard DBC `CM_ SG_` comments and are placed at the same level as `BO_` instructions (not indented)
+- The `vera:mqtt-topic=` prefix keeps MQTT configuration distinct from ordinary signal documentation comments
+- Topics are associated with a specific message ID and signal name
 
 ### Example DBC File
 
@@ -203,8 +205,8 @@ TP_ <signal_name> <mqtt_topic>
 BO_ 123 EngineSpeed: 6 Engine
     SG_ EngineSpeed : 0|32@1+ (0.1,0) [0|8000] "RPM" DriverGateway
     SG_ BatteryTemperature : 32|16@1+(12,4) (1,0) [0|8000] "ºC" DriverGateway
-TP_ EngineSpeed vehicle/engine/speed
-TP_ BatteryTemperature vehicle/battery/temperature
+CM_ SG_ 123 EngineSpeed "vera:mqtt-topic=vehicle/engine/speed";
+CM_ SG_ 123 BatteryTemperature "vera:mqtt-topic=vehicle/battery/temperature";
 ```
 
 ## Development

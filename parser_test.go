@@ -26,31 +26,32 @@ BO_ 123 EngineSpeed: 3 Engine
 	})
 }
 
-func TestParseSignalTopic(t *testing.T) {
-	t.Run("should parse valid signal topic", func(t *testing.T) {
+func TestParseSignalTopicComment(t *testing.T) {
+	t.Run("should parse a valid MQTT topic comment", func(t *testing.T) {
 		a := assert.New(t)
 
-		topic, err := parseSignalTopic("TP_ EngineSpeed vehicle/engine/speed")
+		topic, err := parseSignalTopicComment(`CM_ SG_ 123 EngineSpeed "vera:mqtt-topic=vehicle/engine/speed";`)
 		a.Nil(err)
 		a.NotNil(topic)
+		a.Equal(uint32(123), topic.MessageID)
 		a.Equal("EngineSpeed", topic.Signal)
 		a.Equal("vehicle/engine/speed", topic.Topic)
 	})
 
-	t.Run("should return error for invalid structure", func(t *testing.T) {
+	t.Run("should return an error for a malformed MQTT topic comment", func(t *testing.T) {
 		a := assert.New(t)
 
-		topic, err := parseSignalTopic("TP_ EngineSpeed")
+		topic, err := parseSignalTopicComment(`CM_ SG_ 123 EngineSpeed "vera:mqtt-topic=vehicle/engine/speed"`)
 		a.Error(err)
 		a.Nil(topic)
-		a.Contains(err.Error(), "signal topic has wrong structure")
+		a.Contains(err.Error(), "MQTT topic comment has wrong structure")
 	})
 
-	t.Run("should return error for too many fields", func(t *testing.T) {
+	t.Run("should ignore regular signal comments", func(t *testing.T) {
 		a := assert.New(t)
 
-		topic, err := parseSignalTopic("TP_ EngineSpeed vehicle/engine/speed extra")
-		a.Error(err)
+		topic, err := parseSignalTopicComment(`CM_ SG_ 123 EngineSpeed "Engine speed in RPM";`)
+		a.Nil(err)
 		a.Nil(topic)
 	})
 }
@@ -61,7 +62,7 @@ func TestParse_WithTopics(t *testing.T) {
 
 		configStr := `BO_ 123 EngineSpeed: 8 Engine
 	SG_ Speed : 0|2@1+ (0.1,0) [0|100] "km/h" Gateway
-TP_ Speed vehicle/engine/speed`
+CM_ SG_ 123 Speed "vera:mqtt-topic=vehicle/engine/speed";`
 		reader := strings.NewReader(configStr)
 
 		config, err := Parse(reader)
@@ -69,6 +70,7 @@ TP_ Speed vehicle/engine/speed`
 		a.NotNil(config)
 		a.Len(config.Messages, 1)
 		a.Len(config.Topics, 1)
+		a.Equal(uint32(123), config.Topics[0].MessageID)
 		a.Equal("Speed", config.Topics[0].Signal)
 		a.Equal("vehicle/engine/speed", config.Topics[0].Topic)
 	})
@@ -86,14 +88,14 @@ TP_ Speed vehicle/engine/speed`
 		a.Len(config.Topics, 0)
 	})
 
-	t.Run("should skip lines that are not BO_ or TP_", func(t *testing.T) {
+	t.Run("should skip non-topic DBC instructions and comments", func(t *testing.T) {
 		a := assert.New(t)
 
 		configStr := `CM_ "This is a comment"
 BO_ 123 EngineSpeed: 8 Engine
 	SG_ Speed : 0|2@1+ (0.1,0) [0|100] "km/h" Gateway
 BA_ "AttributeName" "AttributeValue"
-TP_ Speed vehicle/engine/speed`
+CM_ SG_ 123 Speed "vera:mqtt-topic=vehicle/engine/speed";`
 		reader := strings.NewReader(configStr)
 
 		config, err := Parse(reader)
