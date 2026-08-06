@@ -30,7 +30,8 @@ vera_err_t vera_encode_autodevkit_{{.Name}}(
 	if (!frame)	return vera_err_null_arg;
 
 	memset(data, 0, sizeof(uint8_t)*8);
-	frame->ID = {{printf "%#x" .ID}};
+	frame->StdId = {{printf "%#x" .ID}};
+	frame->IDE = CAN_ID_STD;
 	frame->DLC = {{.DLC}};
 	{{range .Signals}}
 	_insert_data_in_payload(data, {{.Name}}, {{.StartBit}}, {{.Length}});
