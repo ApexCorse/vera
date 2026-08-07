@@ -1,8 +1,10 @@
 package vera
 
 type Config struct {
-	Messages []Message
-	Topics   []SignalTopic
+	Messages   []Message
+	Topics     []SignalTopic
+	Nodes      []Node
+	NewSymbols []string
 }
 
 type Node string

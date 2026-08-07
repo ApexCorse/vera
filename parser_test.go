@@ -105,3 +105,36 @@ CM_ SG_ 123 Speed "vera:mqtt-topic=vehicle/engine/speed";`
 		a.Len(config.Topics, 1)
 	})
 }
+
+func TestParse_WithNodesAndSymbols(t *testing.T) {
+	t.Run("should parse config with nodes and symbols", func(t *testing.T) {
+		a := assert.New(t)
+
+		configStr := `NS_ :
+	BA_
+	CM_
+	VAL_
+BU_: DriverGateway EngineGateway ABS
+BO_ 123 EngineSpeed: 3 Engine
+   SG_ EngineSpeed : 0|16@1+ (0.1,0) [0|8000] "RPM" DriverGateway
+	SG_ OilTemperature : 16|8@1- (1,-40) [-40|150] "ºC" DriverGateway,EngineGateway`
+
+		reader := strings.NewReader(configStr)
+
+		config, err := Parse(reader)
+		a.Nil(err)
+		a.NotNil(config)
+
+		a.Len(config.Messages, 1)
+
+		a.Len(config.Nodes, 3)
+		a.Equal(Node("DriverGateway"), config.Nodes[0])
+		a.Equal(Node("EngineGateway"), config.Nodes[1])
+		a.Equal(Node("ABS"), config.Nodes[2])
+
+		a.Len(config.NewSymbols, 3)
+		a.Equal("BA_", config.NewSymbols[0])
+		a.Equal("CM_", config.NewSymbols[1])
+		a.Equal("VAL_", config.NewSymbols[2])
+	})
+}
