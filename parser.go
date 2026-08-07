@@ -55,6 +55,25 @@ func Parse(r io.Reader) (*Config, error) {
 			if signalTopic != nil {
 				config.Topics = append(config.Topics, *signalTopic)
 			}
+		} else if strings.HasPrefix(lines[i], "BU_:") {
+			nodesStr := strings.TrimPrefix(lines[i], "BU_:")
+			nodeNames := strings.Fields(nodesStr)
+			for _, n := range nodeNames {
+				config.Nodes = append(config.Nodes, Node(n))
+			}
+		} else if strings.HasPrefix(lines[i], "NS_ :") {
+			j := i + 1
+			for ; j < len(lines); j++ {
+				line := strings.TrimSpace(lines[j])
+				if line == "" {
+					continue
+				}
+				if strings.Contains(line, " ") || strings.Contains(line, ":") {
+					break
+				}
+				config.NewSymbols = append(config.NewSymbols, line)
+			}
+			i = j - 1
 		}
 	}
 
