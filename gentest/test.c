@@ -65,7 +65,7 @@ void test_successful_decoding_clamping(void) {
 	vera_err_t err = vera_decode_can_frame(&frame, &result);
 	TEST_ASSERT_EQUAL(vera_err_ok, err);
 	
-	// the program will cut the singal at its max allowed value (8000 RPM)
+	// the program will cut the signal at its max allowed value (8000 RPM)
 	TEST_ASSERT_EQUAL_FLOAT(8000.0, result.decoded_signals[0].value); 
 }
 
@@ -104,6 +104,28 @@ void test_failing_encoding_null_arg(void) {
 	TEST_ASSERT_EQUAL(vera_err_null_arg, err);
 }
 
+void test_failing_decoding_null_frame(void) {
+	vera_decoded_signal_t signals[2];
+	vera_decoding_result_t result = {
+		.n_signals = 0,
+		.decoded_signals = signals
+	};
+
+	vera_err_t err = vera_decode_can_frame(NULL, &result); // NULL frame, it will fail the test
+	TEST_ASSERT_EQUAL(vera_err_null_arg, err);
+}
+
+void test_failing_decoding_null_result(void) {
+	vera_can_rx_frame_t frame = {
+		.id = 123,
+		.dlc = 8,
+		.data = {0}
+	};
+
+	vera_err_t err = vera_decode_can_frame(&frame, NULL); // NULL result, it will fail the test
+	TEST_ASSERT_EQUAL(vera_err_null_arg, err);
+}
+
 void test_failing_decoding_out_of_bounds(void) {
 	vera_can_rx_frame_t frame = {
 		.id = 123,
@@ -130,6 +152,8 @@ int main(void) {
 	RUN_TEST(test_succesful_decoding_unknown_id);
 	RUN_TEST(test_failing_decoding_null_arg);
 	RUN_TEST(test_failing_encoding_null_arg);
+	RUN_TEST(test_failing_decoding_null_frame);
+	RUN_TEST(test_failing_decoding_null_result);
 	RUN_TEST(test_failing_decoding_out_of_bounds);
 
 	return UNITY_END();
