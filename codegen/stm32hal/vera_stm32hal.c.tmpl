@@ -14,7 +14,7 @@ vera_err_t vera_decode_stm32hal_rx_frame(
 	};
 	memcpy(vera_frame.data, data, frame->DLC);
 
-	return vera_decode_can_frame(vera_frame, result);
+	return vera_decode_can_frame(&vera_frame, result);
 }
 
 {{- range .Messages}}
