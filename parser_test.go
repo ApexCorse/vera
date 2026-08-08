@@ -137,4 +137,49 @@ BO_ 123 EngineSpeed: 3 Engine
 		a.Equal("CM_", config.NewSymbols[1])
 		a.Equal("VAL_", config.NewSymbols[2])
 	})
+
+	t.Run("should handle empty BU_ and NS_ sections", func(t *testing.T) {
+		a := assert.New(t)
+
+		configStr := `NS_ :
+BU_: 
+BO_ 123 EngineSpeed: 3 Engine
+   SG_ EngineSpeed : 0|16@1+ (0.1,0) [0|8000] "RPM" DriverGateway`
+
+		reader := strings.NewReader(configStr)
+		config, err := Parse(reader)
+
+		a.Nil(err)
+		a.NotNil(config)
+
+		a.Len(config.Nodes, 0)
+		a.Len(config.NewSymbols, 0)
+		a.Len(config.Messages, 1)
+	})
+
+	t.Run("should skip unrelated DBC instructions and comments", func(t *testing.T) {
+		a := assert.New(t)
+
+		configStr := `CM_ "This is a comment"
+NS_ :
+	BA_
+	CM_
+BA_ "This is an attribute"
+BU_: Gateway Engine
+VAL_ 123 "This is a value"`
+
+		reader := strings.NewReader(configStr)
+		config, err := Parse(reader)
+
+		a.Nil(err)
+		a.NotNil(config)
+
+		a.Len(config.Nodes, 2)
+		a.Equal(Node("Gateway"), config.Nodes[0])
+		a.Equal(Node("Engine"), config.Nodes[1])
+
+		a.Len(config.NewSymbols, 2)
+		a.Equal("BA_", config.NewSymbols[0])
+		a.Equal("CM_", config.NewSymbols[1])
+	})
 }
