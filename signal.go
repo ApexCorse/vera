@@ -1,9 +1,12 @@
 package vera
 
 import (
+	"regexp"
 	"strconv"
 	"strings"
 )
+
+var signalDefinitionPattern = regexp.MustCompile(`^\s*SG_\s+(\S+)\s*:\s*(\S+)\s+(\([^)]*\))\s+(\[[^]]*\])\s+("(?:[^"\\]|\\.)*")(?:\s+(\S+))?\s*$`)
 
 type Signal struct {
 	Name     string
@@ -41,55 +44,35 @@ func NewSignalFromLine(message *Message, line string, lineNumber int) (*Signal, 
 		lineNumber: lineNumber,
 	}
 
-	line = strings.TrimFunc(line, func(r rune) bool {
-		return r == ' ' || r == '\t'
-	})
-
-	if !strings.HasPrefix(line, "SG_") {
-		return nil, errorAtLine(signal.lineNumber, "signal line doesn't start with 'SG_'")
-	}
-
-	lineParts := strings.Fields(line)
-	if err := signal.checkLineStructure(lineParts); err != nil {
-		return nil, err
-	}
-
-	signal.Name = lineParts[1]
-
-	if err := signal.parseBitInfo(message, lineParts[3]); err != nil {
-		return nil, err
-	}
-
-	if err := signal.parseFactorOffset(lineParts[4]); err != nil {
-		return nil, err
-	}
-
-	if err := signal.parseMinMax(lineParts[5]); err != nil {
-		return nil, err
-	}
-
-	if err := signal.parseUnit(lineParts[6]); err != nil {
-		return nil, err
-	}
-
-	if len(lineParts) == 8 {
-		signal.parseReceivers(lineParts[7])
-	}
-
-	return signal, nil
-}
-
-func (s *Signal) checkLineStructure(lineParts []string) error {
-	if len(lineParts) < 7 {
-		return errorAtLine(s.lineNumber, `signal line is not well structured, must adhere to:
+	matches := signalDefinitionPattern.FindStringSubmatch(line)
+	if matches == nil {
+		return nil, errorAtLine(signal.lineNumber, `signal line is not well structured, must adhere to:
 SG_ <SignalName> : <StartBit>|<Length>@<BitOrder><Signed> (<Factor>,<Offset>) [<Min>,<Max>] "<Unit>" <...Receivers>`)
 	}
 
-	if lineParts[2] != ":" {
-		return errorAtLine(s.lineNumber, "signal line has not a ':' between <SignalName> and <StartBit>")
+	signal.Name = matches[1]
+
+	if err := signal.parseBitInfo(message, matches[2]); err != nil {
+		return nil, err
 	}
 
-	return nil
+	if err := signal.parseFactorOffset(matches[3]); err != nil {
+		return nil, err
+	}
+
+	if err := signal.parseMinMax(matches[4]); err != nil {
+		return nil, err
+	}
+
+	if err := signal.parseUnit(matches[5]); err != nil {
+		return nil, err
+	}
+
+	if matches[6] != "" {
+		signal.parseReceivers(matches[6])
+	}
+
+	return signal, nil
 }
 
 func (s *Signal) parseBitInfo(message *Message, signalBitInfo string) error {

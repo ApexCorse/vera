@@ -1,9 +1,12 @@
 package vera
 
 import (
+	"regexp"
 	"strconv"
 	"strings"
 )
+
+var messageDefinitionPattern = regexp.MustCompile(`^\s*BO_\s+(\S+)\s+(\S+)\s*:\s+(\S+)\s+(\S+)\s*$`)
 
 type Message struct {
 	Name        string
@@ -93,30 +96,25 @@ func NewMessageFromLines(lines []string, startLineNumber int) (*Message, error) 
 }
 
 func (m *Message) parseDefinition(line string) error {
-	messageDefinitionParts := strings.Fields(line)
-	if len(messageDefinitionParts) != 5 {
+	matches := messageDefinitionPattern.FindStringSubmatch(line)
+	if matches == nil {
 		return errorAtLine(m.lineNumber, `message line definition must be composed of 5 elements:
 BO_ <MessageID> <MessageName>: <DLC> <TransmitterNode>`)
 	}
 
-	messageIDStr := messageDefinitionParts[1]
+	messageIDStr := matches[1]
 	if err := m.parseID(messageIDStr); err != nil {
 		return err
 	}
 
-	messageName := messageDefinitionParts[2]
-	if !strings.HasSuffix(messageName, ":") {
-		return errorAtLine(m.lineNumber, "message name must end with a ':'")
-	}
-	messageName = strings.TrimSuffix(messageName, ":")
-
-	dlcStr := messageDefinitionParts[3]
+	messageName := matches[2]
+	dlcStr := matches[3]
 	dlc, err := strconv.Atoi(dlcStr)
 	if err != nil {
 		return errorAtLine(m.lineNumber, "message DLC must be a base 10 integer")
 	}
 
-	transmitter := messageDefinitionParts[4]
+	transmitter := matches[4]
 
 	m.Name = messageName
 	m.DLC = uint8(dlc)

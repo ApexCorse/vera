@@ -26,6 +26,18 @@ BO_ 123 EngineSpeed: 3 Engine
 	})
 }
 
+func TestParse_SignalWithSpacesInUnit(t *testing.T) {
+	a := assert.New(t)
+
+	config, err := Parse(strings.NewReader(`BO_ 0x123 Cabin: 8 Gateway
+	SG_ InteriorTemperature: 0|8@1+ (0.5,-40) [-40|87.5] "degrees Celsius" Climate`))
+
+	a.NoError(err)
+	a.Len(config.Messages, 1)
+	a.Len(config.Messages[0].Signals, 1)
+	a.Equal("degrees Celsius", config.Messages[0].Signals[0].Unit)
+}
+
 func TestParseSignalTopicComment(t *testing.T) {
 	t.Run("should parse a valid MQTT topic comment", func(t *testing.T) {
 		a := assert.New(t)
