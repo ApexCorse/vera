@@ -111,7 +111,7 @@ vera_err_t vera_decode_can_frame(
 				.offset = {{printf "%.4f" $signal.Offset}},
 				.min = {{printf "%.4f" $signal.Min}},
 				.max = {{printf "%.4f" $signal.Max}},
-				.topic = "{{$signal.Topic}}"
+				.topic = {{printf "%q" $signal.Metadata.MQTTTopic}}
 			};
 			{{- end}}
 

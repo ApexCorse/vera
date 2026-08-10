@@ -20,7 +20,7 @@ type Signal struct {
 	Max       float32
 	Unit      string
 	Receivers []Node
-	Topic     string
+	Metadata  SignalMetadata
 
 	lineNumber int
 }
@@ -34,6 +34,9 @@ func (s *Signal) Validate() error {
 	}
 	if s.Factor == 0 {
 		return errorAtLine(s.lineNumber, "signal factor cannot be zero")
+	}
+	if err := s.Metadata.Validate(); err != nil {
+		return errorAtLine(s.lineNumber, "signal metadata: %v", err)
 	}
 
 	return nil
