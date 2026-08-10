@@ -14,7 +14,7 @@ Vera exists to simplify the workflow of working with CAN networks by providing:
 The generated code provides:
 - Signal decoding from raw CAN frames with automatic scaling/offset conversion
 - Signal encoding for creating CAN frames
-- MQTT topic mapping via standard DBC signal comments, to integrate in MQTT networks and pipelines
+- MQTT topic mapping and optional alert metadata via standard DBC signal attributes, to integrate in MQTT networks and pipelines
 - Validation for out-of-bounds values
 
 ## Installation
@@ -86,8 +86,8 @@ The main package (`vera/`) contains the core functionality:
 | `parser.go` | Parses DBC files and returns a `Config` structure |
 | `message.go` | `Message` struct with validation and line parsing |
 | `signal.go` | `Signal` struct with validation and detailed parsing |
-| `types.go` | Shared types (`Config`, `Node`, `Endianness`, `SignalTopic`) |
-| `validator.go` | Validation of DBC content (signal placement, duplicate topics, etc.) |
+| `types.go` | Shared types (`Config`, `Node`, `Endianness`, `SignalMetadata`) |
+| `validator.go` | Validation of DBC content and signal metadata |
 | `errors.go` | Error construction with line number context |
 
 ### Codegen Package Files
@@ -188,25 +188,34 @@ Vera expects DBC files with the following format:
 ```
 BO_ <message_id> <message_name>: <dlc> <transmitter>
     SG_ <signal_name> : <start_bit>|<length>@<endianness><sign> (<factor>,<offset>) [<min>|<max>] "<unit>" <receivers>
-CM_ SG_ <message_id> <signal_name> "vera:mqtt-topic=<mqtt_topic>";
+BA_DEF_ SG_ "VeraMqttTopic" STRING ;
+BA_ "VeraMqttTopic" SG_ <message_id> <signal_name> "<mqtt_topic>";
 ```
 
 **Important notes:**
 - Start bit and length are in **bits**, DLC is in **bytes**
 - Receivers are parsed if present, but not used in code generation
 - Only **little-endian** (endiananness `1`) is currently supported
-- MQTT topics use standard DBC `CM_ SG_` comments and are placed at the same level as `BO_` instructions (not indented)
-- The `vera:mqtt-topic=` prefix keeps MQTT configuration distinct from ordinary signal documentation comments
-- Topics are associated with a specific message ID and signal name
+- Signal metadata uses standard DBC `BA_DEF_ SG_` declarations and `BA_ ... SG_` assignments.
+- Vera recognizes `VeraMqttTopic` (`STRING`), `VeraWarningLow`, `VeraWarningHigh`, `VeraCriticalLow`, `VeraCriticalHigh` (`FLOAT`), and `VeraStaleAfterMs` (`INT`). Every recognized assignment needs a preceding matching declaration.
+- All metadata is optional. Thresholds are alert metadata, separate from a signal's physical `[min|max]` range. `VeraStaleAfterMs` must be greater than zero when present.
+- The legacy `vera:mqtt-topic=` comment format is rejected.
 
 ### Example DBC File
 
 ```
 BO_ 123 EngineSpeed: 6 Engine
     SG_ EngineSpeed : 0|32@1+ (0.1,0) [0|8000] "RPM" DriverGateway
-    SG_ BatteryTemperature : 32|16@1+(12,4) (1,0) [0|8000] "ºC" DriverGateway
-CM_ SG_ 123 EngineSpeed "vera:mqtt-topic=vehicle/engine/speed";
-CM_ SG_ 123 BatteryTemperature "vera:mqtt-topic=vehicle/battery/temperature";
+    SG_ BatteryTemperature : 32|16@1+ (1,0) [0|8000] "ºC" DriverGateway
+BA_DEF_ SG_ "VeraMqttTopic" STRING ;
+BA_DEF_ SG_ "VeraWarningHigh" FLOAT -1000000 1000000;
+BA_DEF_ SG_ "VeraCriticalHigh" FLOAT -1000000 1000000;
+BA_DEF_ SG_ "VeraStaleAfterMs" INT 1 4294967295;
+BA_ "VeraMqttTopic" SG_ 123 EngineSpeed "vehicle/engine/speed";
+BA_ "VeraWarningHigh" SG_ 123 EngineSpeed 7500;
+BA_ "VeraCriticalHigh" SG_ 123 EngineSpeed 7900;
+BA_ "VeraStaleAfterMs" SG_ 123 EngineSpeed 500;
+BA_ "VeraMqttTopic" SG_ 123 BatteryTemperature "vehicle/battery/temperature";
 ```
 
 ## Development
