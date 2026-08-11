@@ -86,6 +86,13 @@ vera_err_t vera_decode_can_frame(
 	vera_decoding_result_t* result
 );
 
+void vera_insert_data_in_payload(
+	uint8_t* payload,
+	uint64_t data,
+	uint8_t  start,
+	uint8_t  length
+);
+
 {{- range .Messages}}
 
 vera_err_t vera_encode_{{.Name}}(

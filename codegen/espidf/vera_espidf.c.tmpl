@@ -31,7 +31,7 @@ vera_err_t vera_encode_espidf_{{.Name}}(
 	frame->header.id = {{printf "%#x" .ID}};
 	frame->header.dlc = {{.DLC}};
 	{{range .Signals}}
-	_insert_data_in_payload(frame->buffer, {{.Name}}, {{.StartBit}}, {{.Length}});
+	vera_insert_data_in_payload(frame->buffer, {{.Name}}, {{.StartBit}}, {{.Length}});
 	{{- end}}
 	return vera_err_ok;
 }
