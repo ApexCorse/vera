@@ -64,7 +64,20 @@ vera_err_t _decode_message(
 	vera_signal_t*          signals,
 	vera_decoding_result_t* result
 ) {
-	if (!result->decoded_signals) return vera_err_null_arg;
+	if (message->n_signals > result->decoded_capacity)
+		return vera_err_insufficient_capacity;
+	if (message->n_signals > 0 && !result->decoded_signals)
+		return vera_err_null_arg;
+	if (frame->dlc > CAN_MAX_DATA_LEN || frame->dlc < message->dlc)
+		return vera_err_out_of_bounds;
+
+	/* Validate every signal before writing any result entry. */
+	for (uint8_t i = 0; i < message->n_signals; i++) {
+		if (signals[i].start_bit >= frame->dlc * 8 ||
+			signals[i].start_bit + signals[i].dlc > frame->dlc * 8) {
+			return vera_err_out_of_bounds;
+		}
+	}
 
 	for (uint8_t i = 0; i < message->n_signals; i++) {
 		vera_err_t err = _decode_signal(
@@ -75,17 +88,36 @@ vera_err_t _decode_message(
 		if (err != vera_err_ok) {
 			return err;
 		}
-		result->n_signals++;
 	}
+	result->n_signals = message->n_signals;
 
 	return vera_err_ok;
+}
+
+vera_err_t vera_frame_signal_count(uint32_t frame_id, uint8_t* count) {
+	if (!count)
+		return vera_err_null_arg;
+
+	*count = 0;
+	switch(frame_id) {
+{{- range .Messages}}
+		case {{printf "%#x" .ID}}:
+			*count = {{len .Signals}};
+			return vera_err_ok;
+{{- end}}
+		default:
+			return vera_err_unknown_frame;
+	}
 }
 
 vera_err_t vera_decode_can_frame(
 	vera_can_rx_frame_t*    frame,
 	vera_decoding_result_t* result
 ) {
-	if (!frame || !result)
+	if (!result)
+		return vera_err_null_arg;
+	result->n_signals = 0;
+	if (!frame)
 		return vera_err_null_arg;
 
 	switch(frame->id) {
@@ -98,6 +130,7 @@ vera_err_t vera_decode_can_frame(
 				.n_signals = {{len .Signals}}
 			};
 
+			{{- if .Signals}}
 			vera_signal_t signals[{{len .Signals}}];
 			{{- range $i, $signal := .Signals}}
 			signals[{{$i}}]	= (vera_signal_t){
@@ -115,21 +148,20 @@ vera_err_t vera_decode_can_frame(
 			};
 			{{- end}}
 
-			vera_err_t err = _decode_message(
+			return _decode_message(
 				frame,
 				&message,
 				signals,
 				result
 			);
-			if (err != vera_err_ok) {
-				return err;
-			}
-			break;
+			{{- else}}
+			return _decode_message(frame, &message, NULL, result);
+			{{- end}}
 		}
 {{- end}}
+		default:
+			return vera_err_unknown_frame;
 	}
-
-	return vera_err_ok;
 }
 
 {{- range .Messages}}

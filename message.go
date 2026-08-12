@@ -24,6 +24,9 @@ func (m *Message) Validate() error {
 	if m.DLC > 8 {
 		return errorAtLine(m.lineNumber, "message DLC must be a number between 1 and 8")
 	}
+	if len(m.Signals) > 255 {
+		return errorAtLine(m.lineNumber, "message cannot contain more than 255 signals")
+	}
 
 	//TODO(lentscode): check for start bits out of bounds
 	if m.signalsTotalLength > m.DLC*8 {

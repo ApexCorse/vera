@@ -11,10 +11,7 @@ void test_successful_decoding(void) {
 		.data = {0x00, 0x00, 0x7d, 0xf4, 0x0c, 0xe5, 0x64, 0x10},
 	};
 	vera_decoded_signal_t signals[vera_n_signals_Message1];
-	vera_decoding_result_t result = {
-		.n_signals = 0,
-		.decoded_signals = signals
-	};
+	vera_decoding_result_t result = VERA_DECODING_RESULT(signals);
 
 	vera_err_t err = vera_decode_can_frame(&frame, &result);
 	TEST_ASSERT_EQUAL(vera_err_ok, err);
@@ -57,10 +54,7 @@ void test_successful_decoding_clamping(void) {
 		.data = {0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00}, // RPM value above max level
 	};
 	vera_decoded_signal_t signals[vera_n_signals_Message1];
-	vera_decoding_result_t result = {
-		.n_signals = 0,
-		.decoded_signals = signals
-	};
+	vera_decoding_result_t result = VERA_DECODING_RESULT(signals);
 
 	vera_err_t err = vera_decode_can_frame(&frame, &result);
 	TEST_ASSERT_EQUAL(vera_err_ok, err);
@@ -69,19 +63,51 @@ void test_successful_decoding_clamping(void) {
 	TEST_ASSERT_EQUAL_FLOAT(8000.0, result.decoded_signals[0].value); 
 }
 
-void test_succesful_decoding_unknown_id(void) {
+void test_failing_decoding_unknown_id(void) {
 	vera_can_rx_frame_t frame = { .id = 999, .dlc = 8, .data = {0} }; // unknown id
 	vera_decoded_signal_t signals[2];
+	vera_decoding_result_t result = VERA_DECODING_RESULT(signals);
+	result.n_signals = 1;
+
+	vera_err_t err = vera_decode_can_frame(&frame, &result);
+
+	TEST_ASSERT_EQUAL(vera_err_unknown_frame, err);
+	TEST_ASSERT_EQUAL(0, result.n_signals);
+}
+
+void test_frame_signal_count(void) {
+	uint8_t count = 0;
+	TEST_ASSERT_EQUAL(vera_err_ok, vera_frame_signal_count(123, &count));
+	TEST_ASSERT_EQUAL(2, count);
+	TEST_ASSERT_EQUAL(vera_err_ok, vera_frame_signal_count(456, &count));
+	TEST_ASSERT_EQUAL(0, count);
+	TEST_ASSERT_EQUAL(vera_err_unknown_frame, vera_frame_signal_count(999, &count));
+	TEST_ASSERT_EQUAL(0, count);
+	TEST_ASSERT_EQUAL(vera_err_null_arg, vera_frame_signal_count(123, NULL));
+}
+
+void test_successful_decoding_zero_signal_message(void) {
+	vera_can_rx_frame_t frame = { .id = 456, .dlc = 0 };
 	vera_decoding_result_t result = {
-		.n_signals = 0,
-		.decoded_signals = signals
+		.n_signals = 1,
+		.decoded_capacity = 0,
+		.decoded_signals = NULL
 	};
 
 	vera_err_t err = vera_decode_can_frame(&frame, &result);
-	
-	// the program will ignore the signal
 	TEST_ASSERT_EQUAL(vera_err_ok, err);
 	TEST_ASSERT_EQUAL(0, result.n_signals);
+}
+
+void test_failing_decoding_insufficient_capacity(void) {
+	vera_can_rx_frame_t frame = { .id = 123, .dlc = 8, .data = {0} };
+	vera_decoded_signal_t signals[1] = { { .name = "unchanged" } };
+	vera_decoding_result_t result = VERA_DECODING_RESULT(signals);
+
+	vera_err_t err = vera_decode_can_frame(&frame, &result);
+	TEST_ASSERT_EQUAL(vera_err_insufficient_capacity, err);
+	TEST_ASSERT_EQUAL(0, result.n_signals);
+	TEST_ASSERT_EQUAL_STRING("unchanged", signals[0].name);
 }
 
 void test_failing_decoding_null_arg(void) {
@@ -92,6 +118,7 @@ void test_failing_decoding_null_arg(void) {
 	};
 	vera_decoding_result_t result = {
 		.n_signals = 0,
+		.decoded_capacity = 2,
 		.decoded_signals = NULL // NULL pointer, it will fail the test
 	};
 
@@ -106,10 +133,7 @@ void test_failing_encoding_null_arg(void) {
 
 void test_failing_decoding_null_frame(void) {
 	vera_decoded_signal_t signals[2];
-	vera_decoding_result_t result = {
-		.n_signals = 0,
-		.decoded_signals = signals
-	};
+	vera_decoding_result_t result = VERA_DECODING_RESULT(signals);
 
 	vera_err_t err = vera_decode_can_frame(NULL, &result); // NULL frame, it will fail the test
 	TEST_ASSERT_EQUAL(vera_err_null_arg, err);
@@ -132,14 +156,13 @@ void test_failing_decoding_out_of_bounds(void) {
 		.dlc = 2, // 2 bytes instead of 6, it will fail the test
 		.data = {0}
 	};
-	vera_decoded_signal_t signals[vera_n_signals_Message1];
-	vera_decoding_result_t result = {
-		.n_signals = 0,
-		.decoded_signals = signals
-	};
+	vera_decoded_signal_t signals[VERA_MAX_SIGNALS_PER_FRAME] = { { .name = "unchanged" } };
+	vera_decoding_result_t result = VERA_DECODING_RESULT(signals);
 
 	vera_err_t err = vera_decode_can_frame(&frame, &result);
 	TEST_ASSERT_EQUAL(vera_err_out_of_bounds, err);
+	TEST_ASSERT_EQUAL(0, result.n_signals);
+	TEST_ASSERT_EQUAL_STRING("unchanged", signals[0].name);
 }
 
 int main(void) {
@@ -149,7 +172,10 @@ int main(void) {
 	RUN_TEST(test_successful_decoding);
 	RUN_TEST(test_successful_encoding);
 	RUN_TEST(test_successful_decoding_clamping);
-	RUN_TEST(test_succesful_decoding_unknown_id);
+	RUN_TEST(test_failing_decoding_unknown_id);
+	RUN_TEST(test_frame_signal_count);
+	RUN_TEST(test_successful_decoding_zero_signal_message);
+	RUN_TEST(test_failing_decoding_insufficient_capacity);
 	RUN_TEST(test_failing_decoding_null_arg);
 	RUN_TEST(test_failing_encoding_null_arg);
 	RUN_TEST(test_failing_decoding_null_frame);
@@ -158,4 +184,3 @@ int main(void) {
 
 	return UNITY_END();
 }
-
