@@ -70,16 +70,35 @@ typedef struct {
 } vera_decoded_signal_t;
 
 typedef struct {
+	/* Output: the number of signals decoded by the last successful call. */
 	uint8_t n_signals;
+	/* Input: the number of entries available in decoded_signals. */
+	uint8_t decoded_capacity;
 	vera_decoded_signal_t* decoded_signals;
 } vera_decoding_result_t;
 
+/*
+ * Initializes a result from an actual vera_decoded_signal_t array. Do not pass
+ * a pointer: sizeof cannot determine the storage capacity of a pointer.
+ */
+#define VERA_DECODING_RESULT(buffer) { \
+	.n_signals = 0, \
+	.decoded_capacity = (uint8_t)(sizeof(buffer) / sizeof((buffer)[0])), \
+	.decoded_signals = (buffer) \
+}
+
+#define VERA_MAX_SIGNALS_PER_FRAME {{maxSignals .}}U
+
 typedef enum {
 	vera_err_ok,
-	vera_err_allocation,
 	vera_err_out_of_bounds,
-	vera_err_null_arg
+	vera_err_null_arg,
+	vera_err_insufficient_capacity,
+	vera_err_unknown_frame
 } vera_err_t;
+
+/* Returns the generated signal count for frame_id. */
+vera_err_t vera_frame_signal_count(uint32_t frame_id, uint8_t* count);
 
 vera_err_t vera_decode_can_frame(
 	vera_can_rx_frame_t*   frame,

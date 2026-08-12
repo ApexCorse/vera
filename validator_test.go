@@ -96,6 +96,11 @@ func TestConfigValidate(t *testing.T) {
 			config:  Config{Messages: []Message{{DLC: 9}}},
 			errText: "message DLC must be a number between 1 and 8",
 		},
+		{
+			name:    "rejects messages with more than 255 signals",
+			config:  Config{Messages: []Message{{DLC: 8, Signals: make([]Signal, 256)}}},
+			errText: "message cannot contain more than 255 signals",
+		},
 	}
 
 	for _, tt := range tests {

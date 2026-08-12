@@ -129,8 +129,9 @@ int main() {
         .data = {0x10, 0x20, 0x30, 0x40, 0x50, 0x60}
     };
 
-    // Decode the message
-    vera_decoding_result_t result = {0};
+    // The generated maximum avoids frame-ID-specific sizing and heap allocation.
+    vera_decoded_signal_t signals[VERA_MAX_SIGNALS_PER_FRAME];
+    vera_decoding_result_t result = VERA_DECODING_RESULT(signals);
     vera_err_t err = vera_decode_can_frame(&frame, &result);
 
     if (err == vera_err_ok) {
@@ -140,12 +141,17 @@ int main() {
                    result.decoded_signals[i].value,
                    result.decoded_signals[i].unit);
         }
-        free(result.decoded_signals);
     }
 
     return 0;
 }
 ```
+
+`VERA_MAX_SIGNALS_PER_FRAME` is generated from the DBC and lets one caller-owned
+buffer decode any supported frame without heap allocation. To inspect a specific
+frame before decoding, use `vera_frame_signal_count(frame_id, &count)`. Decoding
+returns `vera_err_insufficient_capacity` without writing output when the buffer
+is too small, and `vera_err_unknown_frame` for an unsupported frame ID.
 
 ### SDK-Specific Usage
 
@@ -155,12 +161,12 @@ With `espidf`:
 #include "vera_espidf.h"
 
 void process_can_message(const twai_frame_t* esp_frame) {
-    vera_decoding_result_t result = {0};
+    vera_decoded_signal_t signals[VERA_MAX_SIGNALS_PER_FRAME];
+    vera_decoding_result_t result = VERA_DECODING_RESULT(signals);
     vera_err_t err = vera_decode_espidf_rx_frame(esp_frame, &result);
 
     if (err == vera_err_ok) {
         // Process decoded signals...
-        free(result.decoded_signals);
     }
 }
 ```
@@ -171,12 +177,12 @@ With `stm32hal`:
 #include "vera_stm32hal.h"
 
 void process_can_message(CAN_RxHeaderTypeDef* can_header, uint8_t* data) {
-    vera_decoding_result_t result = {0};
+    vera_decoded_signal_t signals[VERA_MAX_SIGNALS_PER_FRAME];
+    vera_decoding_result_t result = VERA_DECODING_RESULT(signals);
     vera_err_t err = vera_decode_stm32hal_rx_frame(can_header, data, &result);
 
     if (err == vera_err_ok) {
         // Process decoded signals...
-        free(result.decoded_signals);
     }
 }
 ```

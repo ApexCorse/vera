@@ -11,13 +11,25 @@ import (
 //go:embed *.tmpl
 var templateFiles embed.FS
 
+func maxSignals(config *vera.Config) uint8 {
+	var max uint8
+	for _, message := range config.Messages {
+		if uint8(len(message.Signals)) > max {
+			max = uint8(len(message.Signals))
+		}
+	}
+	return max
+}
+
 func GenerateHeader(w io.Writer, config *vera.Config) error {
 	headerTemplateContent, err := templateFiles.ReadFile("vera.h.tmpl")
 	if err != nil {
 		return err
 	}
 
-	headerTmpl, err := template.New("vera.h").Parse(string(headerTemplateContent))
+	headerTmpl, err := template.New("vera.h").Funcs(template.FuncMap{
+		"maxSignals": maxSignals,
+	}).Parse(string(headerTemplateContent))
 	if err != nil {
 		return err
 	}
